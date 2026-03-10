@@ -37,7 +37,6 @@ namespace HPhysic
             occupied = true;
             attachedDevice = device;
 
-            device.transform.SetParent(transform);
             device.transform.position = ghostPoint.position;
             device.transform.rotation = ghostPoint.rotation;
 

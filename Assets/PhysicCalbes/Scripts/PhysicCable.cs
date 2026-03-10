@@ -8,8 +8,8 @@ namespace HPhysic
     {
         [Header("Look")]
         [SerializeField, Min(1)] private int numberOfPoints = 3;
-        [SerializeField, Min(0.01f)] private float space = 0.3f;
-        [SerializeField, Min(0.01f)] private float size = 0.3f;
+        [SerializeField, Min(0.0001f)] private float space = 0.3f;
+        [SerializeField, Min(0.0001f)] private float size = 0.3f;
 
         [Header("Bahaviour")]
         [SerializeField, Min(1f)] private float springForce = 200;

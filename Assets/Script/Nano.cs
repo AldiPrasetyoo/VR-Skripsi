@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
 
 namespace HPhysic
@@ -13,6 +14,10 @@ namespace HPhysic
 
         private GameObject ghost;
 
+        private bool isGrabbed;
+
+        public float rotateSpeed = 90f;
+
         void Awake()
         {
             grab = GetComponent<XRGrabInteractable>();
@@ -22,12 +27,39 @@ namespace HPhysic
             grab.selectExited.AddListener(OnRelease);
         }
 
+        void Update()
+        {
+            // Jika device sudah terpasang dan sedang dipegang
+            if (currentSlot != null && isGrabbed)
+            {
+                RotateDevice();
+            }
+        }
+
+        // =========================
+        // ROTATE DEVICE
+        // =========================
+
+        void RotateDevice()
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+
+            if (device.TryGetFeatureValue(CommonUsages.primary2DAxis, out Vector2 axis))
+            {
+                float rotate = axis.x * rotateSpeed * Time.deltaTime;
+
+                transform.Rotate(Vector3.up, rotate);
+            }
+        }
+
         // =========================
         // SAAT DIAMBIL PLAYER
         // =========================
 
         void OnGrab(SelectEnterEventArgs args)
         {
+            isGrabbed = true;
+
             if (currentSlot != null)
             {
                 currentSlot.Detach();
@@ -46,19 +78,22 @@ namespace HPhysic
 
         void OnRelease(SelectExitEventArgs args)
         {
+            isGrabbed = false;
+
             if (nearestSlot != null)
             {
                 nearestSlot.AttachDevice(gameObject);
                 currentSlot = nearestSlot;
+
                 if (ghost != null)
-                Destroy(ghost);
+                    Destroy(ghost);
             }
             else
             {
-             // dilepas di udara
-            rb.isKinematic = false;
-            rb.useGravity = true;
-             }
+                // dilepas di udara
+                rb.isKinematic = false;
+                rb.useGravity = true;
+            }
         }
 
         // =========================
