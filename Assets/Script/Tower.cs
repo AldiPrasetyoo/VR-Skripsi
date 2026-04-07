@@ -204,15 +204,20 @@ namespace HPhysic
             ApplyColor(obj, mat);
         }
 
-        private void ApplyColor(GameObject obj, Material mat)
-        {
-            Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
+        
+private void ApplyColor(GameObject obj, Material mat)
+{
+    Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
 
-            foreach (Renderer r in renderers)
-            {
-                r.sharedMaterial = mat;
-            }
-        }
+    foreach (Renderer r in renderers)
+    {
+        // 🚫 Skip kalau layer Tangga
+        if (r.gameObject.layer == LayerMask.NameToLayer("Tangga"))
+            continue;
+
+        r.sharedMaterial = mat;
+    }
+}
 
         private Rigidbody GetOrAddRigidbody(GameObject obj)
         {
