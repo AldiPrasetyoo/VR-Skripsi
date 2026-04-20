@@ -11,12 +11,29 @@ namespace HPhysic
         [SerializeField, Min(0.0001f)] private float space = 0.3f;
         [SerializeField, Min(0.0001f)] private float size = 0.3f;
 
-        [Header("Bahaviour")]
+        [Header("Behaviour")]
         [SerializeField, Min(1f)] private float springForce = 200;
         [SerializeField, Min(1f)] private float brakeLengthMultiplier = 2f;
         [SerializeField, Min(0.1f)] private float minBrakeTime = 1f;
-        private float brakeLength;
+
         private float timeToBrake = 1f;
+
+        [Header("Auto Length")]
+        [SerializeField] private float autoExpandThreshold = 0.5f;
+        [SerializeField] private float autoShrinkThreshold = 0.3f;
+        [SerializeField] private float autoDelay = 0.15f;
+        [SerializeField] private int maxPoints = 20;
+        [SerializeField] private int minPoints = 2;
+
+        [Header("Auto Reset")]
+        [SerializeField] private int defaultPoints = 5;
+        [SerializeField] private float shrinkInterval = 0.05f;
+
+        private float autoTimer = 0f;
+        private float shrinkTimer = 0f;
+
+        private bool wasConnected = false;
+        private bool forceShrink = false;
 
         [Header("Object to set")]
         [SerializeField, Required] private GameObject start;
@@ -32,148 +49,101 @@ namespace HPhysic
         private Connector startConnector;
         private Connector endConnector;
 
+        // ================= RESET =================
         [Button("Reset points")]
         private void UpdatePoints()
         {
             if (!start || !end || !point0 || !connector0)
             {
-                Debug.LogWarning("Can't update because one of objects to set is null!");
+                Debug.LogWarning("Missing reference!");
                 return;
             }
 
-            // delete old
+            // 🔥 FIX 1: HAPUS SEMUA SPRING LAMA
+            foreach (var rb in GetComponentsInChildren<Rigidbody>())
+            {
+                var springs = rb.GetComponents<SpringJoint>();
+                for (int i = 0; i < springs.Length; i++)
+                {
+                    DestroyImmediate(springs[i]);
+                }
+            }
+
+            // Hapus clone lama
             int length = transform.childCount;
             for (int i = 0; i < length; i++)
+            {
                 if (transform.GetChild(i).name.StartsWith(cloneText))
                 {
                     DestroyImmediate(transform.GetChild(i).gameObject);
                     length--;
                     i--;
                 }
+            }
 
-            // set new
             Vector3 lastPos = start.transform.position;
-            Rigidbody lasBody = start.GetComponent<Rigidbody>();
+            Rigidbody lastBody = start.GetComponent<Rigidbody>();
+
             for (int i = 0; i < numberOfPoints; i++)
             {
-                GameObject cConnector = i == 0 ? connector0 : CreateNewCon(i);
-                GameObject cPoint = i == 0 ? point0 : CreateNewPoint(i);
+                GameObject cConnector = (i == 0) ? connector0 : CreateNewCon(i);
+                GameObject cPoint = (i == 0) ? point0 : CreateNewPoint(i);
 
-                Vector3 newPos = CountNewPointPos(lastPos);
+                Vector3 newPos = lastPos + transform.forward * space;
+
                 cPoint.transform.position = newPos;
                 cPoint.transform.localScale = Vector3.one * size;
                 cPoint.transform.rotation = transform.rotation;
 
-                SetSpirng(cPoint.GetComponent<SpringJoint>(), lasBody);
+                Rigidbody rb = cPoint.GetComponent<Rigidbody>();
 
-                lasBody = cPoint.GetComponent<Rigidbody>();
+                // 🔥 FIX 2: pastikan hanya 1 spring per point
+                SpringJoint spring = cPoint.GetComponent<SpringJoint>();
+                if (spring == null)
+                    spring = cPoint.AddComponent<SpringJoint>();
+
+                SetSpirng(spring, lastBody);
+
+                lastBody = rb;
 
                 cConnector.transform.position = CountConPos(lastPos, newPos);
                 cConnector.transform.localScale = CountSizeOfCon(lastPos, newPos);
                 cConnector.transform.rotation = CountRoationOfCon(lastPos, newPos);
+
                 lastPos = newPos;
             }
 
-            Vector3 endPos = CountNewPointPos(lastPos);
+            // 🔥 FIX 3: END selalu disambung dari point terakhir
+            Vector3 endPos = lastPos + transform.forward * space;
             end.transform.position = endPos;
-            SetSpirng(lasBody.gameObject.AddComponent<SpringJoint>(), end.GetComponent<Rigidbody>());
-
-            GameObject endConnector = CreateNewCon(numberOfPoints);
-            endConnector.transform.position = CountConPos(lastPos, endPos);
-            endConnector.transform.rotation = CountRoationOfCon(lastPos, endPos);
-
-
-            Vector3 CountNewPointPos(Vector3 lastPos) => lastPos + transform.forward * space;
-        }
-
-        [Button("Add point")]
-        private void AddPoint()
-        {
-            Transform lastprevPoint = GetPoint(numberOfPoints - 1);
-            if (lastprevPoint == null)
-            {
-                Debug.LogWarning("Dont found point number " + (numberOfPoints - 1));
-                return;
-            }
 
             Rigidbody endRB = end.GetComponent<Rigidbody>();
-            foreach (var spring in lastprevPoint.GetComponents<SpringJoint>())
-                if (spring.connectedBody == endRB)
-                    DestroyImmediate(spring);
 
-            GameObject cPoint = CreateNewPoint(numberOfPoints);
-            GameObject cConnector = CreateNewCon(numberOfPoints + 1);
+            SpringJoint endSpring = lastBody.gameObject.AddComponent<SpringJoint>();
+            SetSpirng(endSpring, endRB);
 
-            cPoint.transform.position = end.transform.position;
-            cPoint.transform.rotation = end.transform.rotation;
-            cPoint.transform.localScale = Vector3.one * size;
+            GameObject endConnectorObj = CreateNewCon(numberOfPoints);
+            endConnectorObj.transform.position = CountConPos(lastPos, endPos);
+            endConnectorObj.transform.rotation = CountRoationOfCon(lastPos, endPos);
 
-            SetSpirng(cPoint.GetComponent<SpringJoint>(), lastprevPoint.GetComponent<Rigidbody>());
-            SetSpirng(cPoint.AddComponent<SpringJoint>(), endRB);
-
-            // fix end
-            end.transform.position += end.transform.forward * space;
-
-            cConnector.transform.position = CountConPos(cPoint.transform.position, end.transform.position);
-            cConnector.transform.localScale = CountSizeOfCon(cPoint.transform.position, end.transform.position);
-            cConnector.transform.rotation = CountRoationOfCon(cPoint.transform.position, end.transform.position);
-
-            numberOfPoints++;
+            CollectPoints();
         }
-
-        [Button("Remove point")]
-        private void RemovePoint()
-        {
-            if (numberOfPoints < 2)
-            {
-                Debug.LogWarning("Cable can't be shorter then 1");
-                return;
-            }
-
-            Transform lastprevPoint = GetPoint(numberOfPoints - 1);
-            if (lastprevPoint == null)
-            {
-                Debug.LogWarning("Dont found point number " + (numberOfPoints - 1));
-                return;
-            }
-
-            Transform lastprevCon = GetConnector(numberOfPoints);
-            if (lastprevCon == null)
-            {
-                Debug.LogWarning("Dont found connector number " + (numberOfPoints));
-                return;
-            }
-
-            Transform lastlastprevPoint = GetPoint(numberOfPoints - 2);
-            if (lastlastprevPoint == null)
-            {
-                Debug.LogWarning("Dont found point number " + (numberOfPoints - 2));
-                return;
-            }
-
-
-            Rigidbody endRB = end.GetComponent<Rigidbody>();
-            SetSpirng(lastlastprevPoint.gameObject.AddComponent<SpringJoint>(), endRB);
-
-            end.transform.position = lastprevPoint.position;
-            end.transform.rotation = lastprevPoint.rotation;
-
-            DestroyImmediate(lastprevPoint.gameObject);
-            DestroyImmediate(lastprevCon.gameObject);
-
-            numberOfPoints--;
-        }
-
 
         private void Start()
         {
             startConnector = start.GetComponent<Connector>();
             endConnector = end.GetComponent<Connector>();
 
-            brakeLength = space * numberOfPoints * brakeLengthMultiplier + 2f;
-
             points = new List<Transform>();
             connectors = new List<Transform>();
+
+            CollectPoints();
+        }
+
+        private void CollectPoints()
+        {
+            points.Clear();
+            connectors.Clear();
 
             points.Add(start.transform);
             points.Add(point0.transform);
@@ -183,23 +153,14 @@ namespace HPhysic
             for (int i = 1; i < numberOfPoints; i++)
             {
                 Transform conn = GetConnector(i);
-                if (conn == null)
-                    Debug.LogWarning("Dont found connector number " + i);
-                else
-                    connectors.Add(conn);
-
                 Transform point = GetPoint(i);
-                if (conn == null)
-                    Debug.LogWarning("Dont found point number " + i);
-                else
-                    points.Add(point);
+
+                if (conn != null) connectors.Add(conn);
+                if (point != null) points.Add(point);
             }
 
             Transform endConn = GetConnector(numberOfPoints);
-            if (endConn == null)
-                Debug.LogWarning("Dont found connector number " + numberOfPoints);
-            else
-                connectors.Add(endConn);
+            if (endConn != null) connectors.Add(endConn);
 
             points.Add(end.transform);
         }
@@ -207,36 +168,56 @@ namespace HPhysic
         private void Update()
         {
             float cableLength = 0f;
+
             bool isConnected = startConnector.IsConnected || endConnector.IsConnected;
+
+            if (isConnected)
+                wasConnected = true;
+
+            if (!isConnected && wasConnected)
+            {
+                forceShrink = true;
+                wasConnected = false;
+            }
 
             int numOfParts = connectors.Count;
             Transform lastPoint = points[0];
+
             for (int i = 0; i < numOfParts; i++)
             {
+                if (i + 1 >= points.Count) break;
+
                 Transform nextPoint = points[i + 1];
-                Transform connector = connectors[i].transform;
+                Transform connector = connectors[i];
+
+                if (nextPoint == null || connector == null) continue;
+
                 connector.position = CountConPos(lastPoint.position, nextPoint.position);
-                if (lastPoint.position == nextPoint.position || nextPoint.position == connector.position)
-                {
-                    connector.localScale = Vector3.zero;
-                }
-                else
+
+                if (lastPoint.position != nextPoint.position)
                 {
                     connector.rotation = Quaternion.LookRotation(nextPoint.position - connector.position);
                     connector.localScale = CountSizeOfCon(lastPoint.position, nextPoint.position);
                 }
+                else
+                {
+                    connector.localScale = Vector3.zero;
+                }
 
                 if (isConnected)
-                    cableLength += (lastPoint.position - nextPoint.position).magnitude;
+                    cableLength += Vector3.Distance(lastPoint.position, nextPoint.position);
 
                 lastPoint = nextPoint;
             }
 
             if (isConnected)
             {
-                if (cableLength > brakeLength)
+                float dynamicBrakeLength = space * numberOfPoints * brakeLengthMultiplier + 3f;
+
+                if (cableLength > dynamicBrakeLength)
                 {
                     timeToBrake -= Time.deltaTime;
+
                     if (timeToBrake < 0f)
                     {
                         startConnector.Disconnect();
@@ -249,28 +230,89 @@ namespace HPhysic
                     timeToBrake = minBrakeTime;
                 }
             }
+
+            if (forceShrink)
+            {
+                shrinkTimer -= Time.deltaTime;
+
+                if (shrinkTimer <= 0f)
+                {
+                    if (numberOfPoints > defaultPoints)
+                    {
+                        numberOfPoints--;
+                        UpdatePoints();
+                    }
+                    else
+                    {
+                        forceShrink = false;
+                    }
+
+                    shrinkTimer = shrinkInterval;
+                }
+
+                return;
+            }
+            else
+            {
+                shrinkTimer = shrinkInterval;
+            }
+
+            if (isConnected)
+            {
+                autoTimer -= Time.deltaTime;
+
+                if (autoTimer <= 0f)
+                {
+                    float directDistance = Vector3.Distance(start.transform.position, end.transform.position);
+                    float idealLength = space * numberOfPoints;
+
+                    if (directDistance > idealLength + autoExpandThreshold && numberOfPoints < maxPoints)
+                    {
+                        numberOfPoints++;
+                        UpdatePoints();
+                        autoTimer = autoDelay;
+                    }
+                    else if (directDistance < idealLength - autoShrinkThreshold && numberOfPoints > minPoints)
+                    {
+                        numberOfPoints--;
+                        UpdatePoints();
+                        autoTimer = autoDelay;
+                    }
+                }
+            }
         }
 
         private Vector3 CountConPos(Vector3 start, Vector3 end) => (start + end) / 2f;
-        private Vector3 CountSizeOfCon(Vector3 start, Vector3 end) => new Vector3(size, size, (start - end).magnitude / 2f);
-        private Quaternion CountRoationOfCon(Vector3 start, Vector3 end) => Quaternion.LookRotation(end - start, Vector3.right);
+
+        private Vector3 CountSizeOfCon(Vector3 start, Vector3 end) =>
+            new Vector3(size, size, (start - end).magnitude / 2f);
+
+        private Quaternion CountRoationOfCon(Vector3 start, Vector3 end) =>
+            Quaternion.LookRotation(end - start, Vector3.right);
+
         private string ConnectorName(int index) => $"{cloneText}_{index}_Conn";
         private string PointName(int index) => $"{cloneText}_{index}_Point";
-        private Transform GetConnector(int index) => index > 0 ? transform.Find(ConnectorName(index)) : connector0.transform;
-        private Transform GetPoint(int index) => index > 0 ? transform.Find(PointName(index)) : point0.transform;
 
+        private Transform GetConnector(int index) =>
+            index > 0 ? transform.Find(ConnectorName(index)) : connector0.transform;
+
+        private Transform GetPoint(int index) =>
+            index > 0 ? transform.Find(PointName(index)) : point0.transform;
 
         public void SetSpirng(SpringJoint spring, Rigidbody connectedBody)
         {
             spring.connectedBody = connectedBody;
             spring.spring = springForce;
-            spring.damper = 0.2f;
+            spring.damper = 2f;
+
             spring.autoConfigureConnectedAnchor = false;
             spring.anchor = Vector3.zero;
             spring.connectedAnchor = Vector3.zero;
+
             spring.minDistance = space;
             spring.maxDistance = space;
         }
+
         private GameObject CreateNewPoint(int index)
         {
             GameObject temp = Instantiate(point0);
@@ -278,6 +320,7 @@ namespace HPhysic
             temp.transform.parent = transform;
             return temp;
         }
+
         private GameObject CreateNewCon(int index)
         {
             GameObject temp = Instantiate(connector0);
@@ -285,7 +328,6 @@ namespace HPhysic
             temp.transform.parent = transform;
             return temp;
         }
-
 
         public Connector StartConnector => startConnector;
         public Connector EndConnector => endConnector;

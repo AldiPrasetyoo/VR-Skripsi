@@ -12,7 +12,6 @@ namespace HPhysic
         public enum CableColor { White, Red, Green, Yellow, Blue, Cyan, Magenta }
 
         [field: Header("Settings")]
-
         [field: SerializeField] public ConType ConnectionType { get; private set; } = ConType.Male;
         [field: SerializeField, OnValueChanged(nameof(UpdateConnectorColor))] public CableColor ConnectionColor { get; private set; } = CableColor.White;
 
@@ -24,84 +23,95 @@ namespace HPhysic
 
         [field: SerializeField] public Connector ConnectedTo { get; private set; }
 
-
         [Header("Object to set")]
         [SerializeField, Required] private Transform connectionPoint;
         [SerializeField] private MeshRenderer collorRenderer;
         [SerializeField] private ParticleSystem sparksParticle;
-
 
         private FixedJoint _fixedJoint;
         public Rigidbody Rigidbody { get; private set; }
 
         public Vector3 ConnectionPosition => connectionPoint ? connectionPoint.position : transform.position;
         public Quaternion ConnectionRotation => connectionPoint ? connectionPoint.rotation : transform.rotation;
-        public Quaternion RotationOffset => connectionPoint ? connectionPoint.localRotation : Quaternion.Euler(Vector3.zero);
+        public Quaternion RotationOffset => connectionPoint ? connectionPoint.localRotation : Quaternion.identity;
         public Vector3 ConnectedOutOffset => connectionPoint ? connectionPoint.right : transform.right;
 
         public bool IsConnected => ConnectedTo != null;
         public bool IsConnectedRight => IsConnected && ConnectionColor == ConnectedTo.ConnectionColor;
+
         [SerializeField] private float disconnectDistance = 0.15f;
         private XRGrabInteractable grabInteractable;
         private bool isTryingToConnect = false;
 
-private void Update()
-{
-    if (IsConnected && ConnectedTo != null)
-    {
-        float distance = Vector3.Distance(
-            ConnectionPosition,
-            ConnectedTo.ConnectionPosition
-        );
+        private Connector candidateConnector;
 
-        if (distance > disconnectDistance)
-        {
-            Disconnect();
-        }
-    }
-}
-private Connector candidateConnector;
-private void OnTriggerEnter(Collider other)
-{
-    if (isTryingToConnect) return;
-    if (IsConnected) return;
-
-    if (grabInteractable != null && grabInteractable.isSelected)
-        return;
-
-    Connector otherConnector = other.GetComponent<Connector>();
-    if (otherConnector == null) return;
-
-    if (!CanConnect(otherConnector)) return;
-
-    XRGrabInteractable otherGrab = otherConnector.GetComponent<XRGrabInteractable>();
-    if (otherGrab != null && otherGrab.isSelected)
-        return;
-
-    candidateConnector = otherConnector;
-    isTryingToConnect = true;
-
-    Connect(otherConnector);
-}
-
-private void OnTriggerExit(Collider other)
-{
-    if (other == null) return;
-
-    Connector otherConnector = other.GetComponent<Connector>();
-    if (otherConnector == null) return;
-
-    if (candidateConnector == otherConnector)
-    {
-        candidateConnector = null;
-        isTryingToConnect = false;
-    }
-}
+        private IEnumerator incorrectSparksC;
 
         private void Awake()
         {
-            Rigidbody = gameObject.GetComponent<Rigidbody>();
+            Rigidbody = GetComponent<Rigidbody>();
             grabInteractable = GetComponent<XRGrabInteractable>();
+
+            if (ConnectionType == ConType.Female)
+            {
+                Rigidbody.isKinematic = true;
+                Rigidbody.constraints = RigidbodyConstraints.FreezeAll;
+            }
+        }
+
+        private void Update()
+        {
+            if (IsConnected && ConnectedTo != null)
+            {
+                float distance = Vector3.Distance(
+                    ConnectionPosition,
+                    ConnectedTo.ConnectionPosition
+                );
+
+                if (distance > disconnectDistance)
+                {
+                    Disconnect();
+                }
+            }
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (isTryingToConnect) return;
+            if (IsConnected) return;
+
+            Connector otherConnector = other.GetComponent<Connector>();
+            if (otherConnector == null) return;
+
+            if (!CanConnect(otherConnector)) return;
+
+            if (ConnectionType == ConType.Female) return;
+
+            if (grabInteractable != null && grabInteractable.isSelected)
+                return;
+
+            XRGrabInteractable otherGrab = otherConnector.GetComponent<XRGrabInteractable>();
+            if (otherGrab != null && otherGrab.isSelected)
+                return;
+
+            candidateConnector = otherConnector;
+            isTryingToConnect = true;
+
+            Connect(otherConnector);
+        }
+
+        private void OnTriggerExit(Collider other)
+        {
+            if (other == null) return;
+
+            Connector otherConnector = other.GetComponent<Connector>();
+            if (otherConnector == null) return;
+
+            if (candidateConnector == otherConnector)
+            {
+                candidateConnector = null;
+                isTryingToConnect = false;
+            }
         }
 
         private void Start()
@@ -116,7 +126,6 @@ private void OnTriggerExit(Collider other)
             }
         }
 
-    
         private void OnDisable() => Disconnect();
 
         public void SetAsConnectedTo(Connector secondConnector)
@@ -125,122 +134,143 @@ private void OnTriggerExit(Collider other)
             _wasConnectionKinematic = secondConnector.Rigidbody.isKinematic;
             UpdateInteractableWhenIsConnected();
         }
-public void Connect(Connector secondConnector)
-{
-    if (secondConnector == null)
-    {
-        Debug.LogWarning("Attempt to connect null");
-        return;
-    }
 
-    // ===== FIX LARI-LARI =====
-    XRGrabInteractable grab = secondConnector.GetComponent<XRGrabInteractable>();
-    if (grab != null && grab.isSelected)
-    {
-        grab.interactionManager.SelectExit(
-            grab.firstInteractorSelecting,
-            grab
-        );
-    }
+        public void Connect(Connector secondConnector)
+        {
+            if (secondConnector == null)
+            {
+                Debug.LogWarning("Attempt to connect null");
+                return;
+            }
 
-    if (IsConnected)
-        Disconnect(secondConnector);
+            Connector anchor;
+            Connector moving;
 
-    if (IsConnected)
-        Disconnect(secondConnector);
+            if (this.ConnectionType == ConType.Female)
+            {
+                anchor = this;
+                moving = secondConnector;
+            }
+            else
+            {
+                anchor = secondConnector;
+                moving = this;
+            }
 
-    // ===== STABILIZER TAMBAHAN =====
-    if (!secondConnector.Rigidbody.isKinematic)
-    {
-        secondConnector.Rigidbody.linearVelocity = Vector3.zero;
-        secondConnector.Rigidbody.angularVelocity = Vector3.zero;
-    }
+            XRGrabInteractable grab = moving.GetComponent<XRGrabInteractable>();
+            if (grab != null && grab.isSelected)
+            {
+                grab.interactionManager.SelectExit(
+                    grab.firstInteractorSelecting,
+                    grab
+                );
+            }
 
-    // ===== SNAP TETAP PUNYA KAMU =====
-    secondConnector.transform.rotation =
-        ConnectionRotation * secondConnector.RotationOffset;
+            if (anchor.IsConnected)
+                anchor.Disconnect();
 
-    secondConnector.transform.position =
-        ConnectionPosition -
-        (secondConnector.ConnectionPosition - secondConnector.transform.position);
+            if (moving.IsConnected)
+                moving.Disconnect();
 
-    _fixedJoint = gameObject.AddComponent<FixedJoint>();
-    _fixedJoint.connectedBody = secondConnector.Rigidbody;
-    _fixedJoint.breakForce = Mathf.Infinity;
-    _fixedJoint.breakTorque = Mathf.Infinity;
+            if (!moving.Rigidbody.isKinematic)
+            {
+                moving.Rigidbody.linearVelocity = Vector3.zero;
+                moving.Rigidbody.angularVelocity = Vector3.zero;
+            }
 
-    secondConnector.SetAsConnectedTo(this);
+            moving.transform.rotation =
+                anchor.ConnectionRotation * moving.RotationOffset;
 
-    _wasConnectionKinematic = secondConnector.Rigidbody.isKinematic;
+            moving.transform.position =
+                anchor.ConnectionPosition -
+                (moving.ConnectionPosition - moving.transform.position);
 
-    if (makeConnectionKinematic)
-        secondConnector.Rigidbody.isKinematic = true;
+            _fixedJoint = anchor.gameObject.AddComponent<FixedJoint>();
+            _fixedJoint.connectedBody = moving.Rigidbody;
+            _fixedJoint.breakForce = Mathf.Infinity;
+            _fixedJoint.breakTorque = Mathf.Infinity;
 
-    ConnectedTo = secondConnector;
+            anchor.ConnectedTo = moving;
+            moving.ConnectedTo = anchor;
 
-    // ===== NETWORK =====
-    NetworkPort myPort = GetComponent<NetworkPort>();
-    NetworkPort otherPort = secondConnector.GetComponent<NetworkPort>();
+            _wasConnectionKinematic = moving.Rigidbody.isKinematic;
 
-    if (myPort != null && otherPort != null)
-    {
-        myPort.ConnectTo(otherPort);
-        Debug.Log($"[NETWORK CONNECT] {myPort.name} -> {otherPort.name}");
-    }
+            if (makeConnectionKinematic)
+                moving.Rigidbody.isKinematic = true;
 
-    if (incorrectSparksC == null && sparksParticle && IsConnected && !IsConnectedRight)
-    {
-        incorrectSparksC = IncorrectSparks();
-        StartCoroutine(incorrectSparksC);
-    }
+            NetworkPort myPort = anchor.GetComponent<NetworkPort>();
+            NetworkPort otherPort = moving.GetComponent<NetworkPort>();
 
-    UpdateInteractableWhenIsConnected();
-    isTryingToConnect = false;
-}
-public void Disconnect(Connector onlyThis = null)
-{
-    if (ConnectedTo == null || (onlyThis != null && onlyThis != ConnectedTo))
-        return;
+            if (myPort != null && otherPort != null)
+            {
+                myPort.ConnectTo(otherPort);
+                Debug.Log($"[NETWORK CONNECT] {myPort.name} -> {otherPort.name}");
+            }
 
-    Destroy(_fixedJoint);
+            // ===== FIX SPARK (MINIMAL CHANGE) =====
+            if (anchor.ConnectionColor != moving.ConnectionColor)
+            {
+                if (sparksParticle != null && incorrectSparksC == null)
+                {
+                    incorrectSparksC = IncorrectSparks();
+                    StartCoroutine(incorrectSparksC);
+                }
 
-// reset velocity agar tidak terpental (AMAN)
-if (Rigidbody != null && !Rigidbody.isKinematic)
-{
-    Rigidbody.linearVelocity = Vector3.zero;
-    Rigidbody.angularVelocity = Vector3.zero;
-}
+                if (secondConnector.sparksParticle != null && secondConnector.incorrectSparksC == null)
+                {
+                    secondConnector.incorrectSparksC = secondConnector.IncorrectSparks();
+                    secondConnector.StartCoroutine(secondConnector.incorrectSparksC);
+                }
+            }
 
-    Connector toDisconnect = ConnectedTo;
-    // === NETWORK DISCONNECT ===
-NetworkPort myPort = GetComponent<NetworkPort>();
-NetworkPort otherPort = ConnectedTo ? ConnectedTo.GetComponent<NetworkPort>() : null;
+            UpdateInteractableWhenIsConnected();
+            anchor.UpdateInteractableWhenIsConnected();
 
-if (myPort != null && otherPort != null)
-{
-    myPort.Disconnect();
-    Debug.Log($"[NETWORK DISCONNECT] {myPort.name}");
-}
-    ConnectedTo = null;
+            isTryingToConnect = false;
+        }
 
-    // kembalikan kinematic state
-    if (makeConnectionKinematic)
-        toDisconnect.Rigidbody.isKinematic = _wasConnectionKinematic;
+        public void Disconnect(Connector onlyThis = null)
+        {
+            if (ConnectedTo == null || (onlyThis != null && onlyThis != ConnectedTo))
+                return;
 
-    // recursive disconnect aman
-    toDisconnect.Disconnect(this);
+            Destroy(_fixedJoint);
 
-    if (sparksParticle)
-    {
-        sparksParticle.Stop();
-        sparksParticle.Clear();
-    }
+            if (Rigidbody != null && !Rigidbody.isKinematic)
+            {
+                Rigidbody.linearVelocity = Vector3.zero;
+                Rigidbody.angularVelocity = Vector3.zero;
+            }
 
-    isTryingToConnect = false;
-    candidateConnector = null;
+            Connector toDisconnect = ConnectedTo;
 
-    UpdateInteractableWhenIsConnected();
-}
+            NetworkPort myPort = GetComponent<NetworkPort>();
+            NetworkPort otherPort = ConnectedTo ? ConnectedTo.GetComponent<NetworkPort>() : null;
+
+            if (myPort != null && otherPort != null)
+            {
+                myPort.Disconnect();
+                Debug.Log($"[NETWORK DISCONNECT] {myPort.name}");
+            }
+
+            ConnectedTo = null;
+
+            if (makeConnectionKinematic)
+                toDisconnect.Rigidbody.isKinematic = _wasConnectionKinematic;
+
+            toDisconnect.Disconnect(this);
+
+            if (sparksParticle)
+            {
+                sparksParticle.Stop();
+                sparksParticle.Clear();
+            }
+
+            isTryingToConnect = false;
+            candidateConnector = null;
+
+            UpdateInteractableWhenIsConnected();
+        }
 
         private void UpdateInteractableWhenIsConnected()
         {
@@ -251,14 +281,11 @@ if (myPort != null && otherPort != null)
             }
         }
 
-
-        private IEnumerator incorrectSparksC;
         private IEnumerator IncorrectSparks()
         {
             while (incorrectSparksC != null && sparksParticle && IsConnected && !IsConnectedRight)
             {
                 sparksParticle.Play();
-
                 yield return new WaitForSeconds(Random.Range(0.6f, 0.8f));
             }
             incorrectSparksC = null;
@@ -288,13 +315,10 @@ if (myPort != null && otherPort != null)
             _ => Color.clear
         };
 
-
         public bool CanConnect(Connector secondConnector) =>
             this != secondConnector
             && !this.IsConnected && !secondConnector.IsConnected
             && this.ConnectionType != secondConnector.ConnectionType
             && (this.allowConnectDifrentCollor || secondConnector.allowConnectDifrentCollor || this.ConnectionColor == secondConnector.ConnectionColor);
     }
-
-    
 }

@@ -94,7 +94,6 @@ namespace HPhysic
 
             ItemData item = items[currentRadialPart];
 
-            // ❌ kalau habis
             if (!item.infinite && item.amount <= 0)
             {
                 radialPartCanvas.gameObject.SetActive(false);
@@ -104,7 +103,6 @@ namespace HPhysic
             EquipItem(currentRadialPart);
             onPartSelected.Invoke(currentRadialPart);
 
-            // 🔥 FIX LIMIT (PENTING)
             if (!item.infinite)
             {
                 item.amount--;
@@ -167,7 +165,6 @@ namespace HPhysic
                 part.GetComponent<Image>().fillAmount =
                     (1f / numberOfRadialPart) - (angleBetweenRadialPart / 360f);
 
-                // 🔥 ICON / TEXT
                 if (i < items.Count)
                 {
                     ItemData item = items[i];
@@ -250,18 +247,26 @@ namespace HPhysic
             obj.transform.position = controllerTransform.position + controllerTransform.forward * spawnDistance;
             obj.transform.rotation = controllerTransform.rotation;
 
-            Rigidbody rb = obj.GetComponent<Rigidbody>();
-            if (rb == null) rb = obj.AddComponent<Rigidbody>();
-            rb.isKinematic = false;
-            rb.useGravity = true;
+            // 🔥 PRIORITAS: grab dari child "Start"
+            XRGrabInteractable grab = null;
 
-            if (obj.GetComponent<Collider>() == null)
-                obj.AddComponent<BoxCollider>();
+            Transform start = obj.transform.Find("Start");
+            if (start != null)
+            {
+                grab = start.GetComponent<XRGrabInteractable>();
+            }
 
-            XRGrabInteractable grab = obj.GetComponent<XRGrabInteractable>();
-            if (grab == null) grab = obj.AddComponent<XRGrabInteractable>();
+            // 🔥 fallback ke parent
+            if (grab == null)
+            {
+                grab = obj.GetComponent<XRGrabInteractable>();
+            }
 
-            StartCoroutine(GrabNextFrame(grab));
+            // 🔥 eksekusi grab
+            if (grab != null)
+            {
+                StartCoroutine(GrabNextFrame(grab));
+            }
         }
 
         System.Collections.IEnumerator GrabNextFrame(XRGrabInteractable grab)

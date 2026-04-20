@@ -688,7 +688,7 @@
                     "name": "Select",
                     "type": "Button",
                     "id": "33754c03-48ec-46ef-9bc6-22ed6bfdd8e8",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -1758,18 +1758,7 @@
                 {
                     "name": "",
                     "id": "cd96c5c7-b691-43fa-ac0c-34c3776b22fc",
-                    "path": "<XRController>{RightHand}/{PrimaryAction}",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": ";Generic XR Controller",
-                    "action": "PrimaryButton",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "b360bf52-cd99-41d3-ba04-2e681c7261e8",
-                    "path": "<MetaAimHand>{RightHand}/indexPressed",
+                    "path": "<XRController>{RightHand}/{PrimaryButton}",
                     "interactions": "",
                     "processors": "",
                     "groups": ";Generic XR Controller",
