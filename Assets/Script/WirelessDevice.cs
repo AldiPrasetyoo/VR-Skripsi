@@ -1,60 +1,130 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(NetworkDevice))]
 public class WirelessDevice : MonoBehaviour
 {
-    public enum WirelessMode
-    {
-        None,
-        AccessPoint,
-        Station
-    }
+    // ================= ENUM =================
+    public enum WirelessMode { Station, AccessPoint, APRepeater }
+    public enum IEEE80211Mode { AN_MIXED }
+    public enum ChannelWidth { Auto, CW20Mhz, CW40Mhz }
+    public enum ChannelShift { None }
+    public enum ExtensionChannel { None }
+    public enum DataRateModule { Default }
+    public enum MaxTXRate { MCS15_270_300 }
+    public enum SecurityMode { None, WPA2_AES }
+    public enum WPAAuthMode { None, PSK }
+    public enum NetworkMode { Bridge }
 
-    [Header("Mode")]
-    public WirelessMode mode = WirelessMode.None;
+    // ================= MODE =================
+    public WirelessMode mode = WirelessMode.Station;
 
     private NetworkDevice networkDevice;
     private bool lastInternetState = false;
 
-    [Header("Radio Settings")]
-    [Range(0, 30)] public float outputPower = 10f;      // dBm
-    [Range(0, 30)] public float antennaGain = 11f;      // dBi
-    [Range(10, 180)] public float beamWidth = 60f;      // degree
-    public float frequencyMHz = 2400f;
-    public float channelWidth = 20f;
+    // ================= GENERAL =================
+    public string deviceName = "NanoStation";
+    public bool isConnected;
 
-    [Header("AP Settings")]
-    public string ssid = "";
-    public string password = "";
-    public int channel = 1;
-
-    [Header("Runtime")]
     public WirelessDevice connectedAP;
+    public List<WirelessDevice> connectedClients = new List<WirelessDevice>();
+
+    public string ipAddress = "0.0.0.0";
+    public string gateway = "-";
+
+    // ================= NETWORK =================
+    public NetworkMode networkMode;
+    public bool disableNetwork;
+
+    public string netmask = "255.255.255.0";
+    public string primaryDNS = "8.8.8.8";
+    public string secondaryDNS = "8.8.4.4";
+    public int mtu = 1500;
+
+    public bool useDHCP = true;       // DHCP / Static
+    public bool isDHCPServer = true;  // khusus AP
+
+    // ================= DHCP =================
+    public string dhcpStartIP = "192.168.1.2";
+    public string dhcpEndIP = "192.168.1.254";
+    private int dhcpCounter = 2;
+
+    // ================= RADIO =================
+    public float outputPower = 10f;
+    public float antennaGain = 16f;
+    public float frequency = 2400f;
+    public float beamWidth = 60f;
+
+    public ChannelWidth channelWidth;
+    public ChannelShift channelShift;
+
     public float currentSignal;
     public float currentEIRP;
 
+    // ================= SIGNAL =================
+    public float horizontalSignal;
+    public float verticalSignal;
+    public float noiseFloor = -95f;
+
+    public float txRate;
+    public float rxRate;
+    public float transmitCCQ = 100f;
+
+    // ================= AIRMAX =================
+    public float airMaxQuality = 100f;
+    public float airMaxCapacity = 100f;
+
+    // ================= LAN =================
+    public string lan0Status = "Connected";
+    public string lan1Status = "Connected";
+
+    // ================= WIRELESS =================
+    public string ssid = "";
+    public string password = "";
+
+    public bool WDS;
+    public string countryCode;
+
+    public IEEE80211Mode ieee80211Mode;
+    public ExtensionChannel extensionChannel;
+    public int channel = 5;
+
+    public bool freqScan;
+    public bool calculateEIRP;
+    public bool autoEIRP;
+
+    public DataRateModule dataRateModule;
+    public MaxTXRate maxTXRate;
+    public bool autoMaxTXRate;
+
+    public SecurityMode securityMode;
+    public WPAAuthMode wpaAuthMode;
+
+    // ================= STATION =================
+    public string lockToAPSSID;
+
+    // ================= CONST =================
     const float DisconnectThreshold = -90f;
     const float MaxEIRP_Indonesia = 36f;
 
-    #region Unity
-
-    private void Awake()
+    // ================= UNITY =================
+    void Awake()
     {
         networkDevice = GetComponent<NetworkDevice>();
     }
 
-    private void OnEnable()
+    void OnEnable()
     {
         if (mode == WirelessMode.AccessPoint)
             NetworksRegistry.RegisterAP(this);
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         NetworksRegistry.UnregisterAP(this);
     }
 
-    private void Update()
+    void Update()
     {
         currentEIRP = GetEIRP();
 
@@ -63,86 +133,151 @@ public class WirelessDevice : MonoBehaviour
 
         if (connectedAP == null)
         {
+            isConnected = false;
             SetInternet(false);
             return;
         }
 
         currentSignal = CalculateSignal(connectedAP);
 
+        horizontalSignal = currentSignal + Random.Range(-2f, 2f);
+        verticalSignal = currentSignal + Random.Range(-2f, 2f);
+
+        txRate = Random.Range(50f, 150f);
+        rxRate = Random.Range(50f, 150f);
+
         if (currentSignal < DisconnectThreshold)
         {
-            Debug.Log($"🔴 {name} DISCONNECTED (Signal too weak: {currentSignal:F1} dBm)");
+            Debug.Log($"🔴 DISCONNECTED (Signal weak: {currentSignal:F1} dBm)");
             Disconnect();
-            SetInternet(false);
             return;
         }
 
-        bool newInternetState = connectedAP.networkDevice.hasInternet;
-        SetInternet(newInternetState);
+        isConnected = true;
+
+        bool internetState = connectedAP.networkDevice.hasInternet;
+        SetInternet(internetState);
     }
 
-    #endregion
-
-    #region Mode
-
- public void SetMode(int modeIndex)
-{
-    NetworksRegistry.UnregisterAP(this);
-
-    mode = (WirelessMode)modeIndex;
-
-    if (mode == WirelessMode.AccessPoint)
+    // ================= MODE =================
+    public void SetMode(int modeIndex)
     {
-        NetworksRegistry.RegisterAP(this);
+        NetworksRegistry.UnregisterAP(this);
+        Disconnect();
 
-        // Kalau device punya kabel internet
-        if (networkDevice.hasInternet)
+        mode = (WirelessMode)modeIndex;
+
+        if (mode == WirelessMode.AccessPoint)
         {
-            networkDevice.SetInternet(true);
+            NetworksRegistry.RegisterAP(this);
+
+            if (useDHCP)
+            {
+                ipAddress = "192.168.0." + Random.Range(2, 254);
+                gateway = "192.168.0.1";
+                Debug.Log($"🌐 AP DHCP IP → {ipAddress}");
+            }
+            else
+            {
+                ipAddress = "192.168.1.1";
+                gateway = "-";
+                Debug.Log("🟢 AP Static IP → 192.168.1.1");
+            }
+        }
+        else
+        {
+            if (useDHCP)
+                ipAddress = "0.0.0.0";
+
+            Debug.Log("🟡 Mode Station aktif");
         }
     }
 
-    // Hanya reset koneksi wireless
-    connectedAP = null;
-}
-
-    #endregion
-
-    #region Connection
-
-public void Connect(WirelessDevice ap, string inputPassword)
-{
-    if (mode != WirelessMode.Station) return;
-    if (ap == null) return;
-    if (ap.mode != WirelessMode.AccessPoint) return;
-    if (ap.password != inputPassword) return;
-
-    connectedAP = ap;
-
-    Debug.Log($"📡 {name} connected to AP {ap.name}");
-
-    // 🔥 langsung cek internet saat connect
-    bool internetState = ap.GetComponent<NetworkDevice>().hasInternet;
-    Debug.Log($"📶 Internet state from AP: {internetState}");
-    SetInternet(internetState);
-}
-
-   public void Disconnect()
-{
-    connectedAP = null;
-
-    // Hanya station yang kehilangan internet saat disconnect
-    if (mode == WirelessMode.Station)
+    // ================= DHCP =================
+    string GenerateDHCPIP()
     {
+        string[] parts = ipAddress.Split('.');
+        string baseIP = parts[0] + "." + parts[1] + "." + parts[2] + ".";
+        string ip = baseIP + dhcpCounter;
+
+        dhcpCounter++;
+        if (dhcpCounter > 254) dhcpCounter = 2;
+
+        return ip;
+    }
+
+    // ================= CONNECTION =================
+    public void Connect(WirelessDevice ap, string inputPassword)
+    {
+        if (mode != WirelessMode.Station) return;
+        if (ap == null) return;
+        if (ap.mode != WirelessMode.AccessPoint) return;
+
+        if (!string.IsNullOrEmpty(lockToAPSSID) && ap.ssid != lockToAPSSID)
+        {
+            Debug.Log("❌ SSID tidak sesuai lock");
+            return;
+        }
+
+        if (ap.securityMode != SecurityMode.None && ap.password != inputPassword)
+        {
+            Debug.Log("❌ Password salah");
+            return;
+        }
+
+        if (connectedAP != null)
+            connectedAP.connectedClients.Remove(this);
+
+        connectedAP = ap;
+        ap.connectedClients.Add(this);
+
+        isConnected = true;
+
+        // ===== IP LOGIC =====
+        if (useDHCP)
+        {
+            if (ap.isDHCPServer)
+            {
+                ipAddress = ap.GenerateDHCPIP();
+                gateway = ap.ipAddress;
+                primaryDNS = ap.primaryDNS;
+                secondaryDNS = ap.secondaryDNS;
+
+                Debug.Log($"📡 DHCP → {ipAddress}");
+            }
+            else
+            {
+                Debug.Log("❌ AP tidak punya DHCP");
+                ipAddress = "0.0.0.0";
+            }
+        }
+        else
+        {
+            Debug.Log($"📡 Static IP → {ipAddress}");
+        }
+
+        SetInternet(ap.networkDevice.hasInternet);
+    }
+
+    public void Disconnect()
+    {
+        if (connectedAP != null)
+            connectedAP.connectedClients.Remove(this);
+
+        connectedAP = null;
+        isConnected = false;
+
+        if (useDHCP)
+        {
+            ipAddress = "0.0.0.0";
+            gateway = "-";
+        }
+
         SetInternet(false);
     }
-}
 
-    #endregion
-
-    #region Internet State
-
-    private void SetInternet(bool state)
+    // ================= INTERNET =================
+    void SetInternet(bool state)
     {
         networkDevice.hasInternet = state;
 
@@ -150,28 +285,19 @@ public void Connect(WirelessDevice ap, string inputPassword)
         {
             lastInternetState = state;
 
-            if (state)
-            {
-                Debug.Log(
-                    $"🟢 {name} GOT INTERNET via {connectedAP.name} | Signal: {currentSignal:F1} dBm"
-                );
-            }
+            if (state && connectedAP != null)
+                Debug.Log($"🟢 GOT INTERNET via {connectedAP.deviceName}");
             else
-            {
-                Debug.Log($"🔴 {name} LOST INTERNET");
-            }
+                Debug.Log("🔴 LOST INTERNET");
         }
     }
 
-    #endregion
-
-    #region Radio Calculation
-
+    // ================= SIGNAL =================
     public float GetEIRP()
     {
         float eirp = outputPower + antennaGain;
 
-        if (eirp > MaxEIRP_Indonesia)
+        if (calculateEIRP && eirp > MaxEIRP_Indonesia)
         {
             outputPower -= (eirp - MaxEIRP_Indonesia);
             eirp = MaxEIRP_Indonesia;
@@ -183,49 +309,24 @@ public void Connect(WirelessDevice ap, string inputPassword)
     float CalculateSignal(WirelessDevice ap)
     {
         float distance = Vector3.Distance(transform.position, ap.transform.position);
-
-        if (distance < 0.1f)
-            distance = 0.1f;
+        if (distance < 0.1f) distance = 0.1f;
 
         float fspl =
             20f * Mathf.Log10(distance) +
-            20f * Mathf.Log10(frequencyMHz) -
+            20f * Mathf.Log10(frequency) -
             27.55f;
 
-        float txAngleLoss = ap.CalculateAngleLoss(transform);
-        float rxAngleLoss = CalculateAngleLoss(ap.transform);
-
-        float obstacleLoss = CalculateObstacleLoss(ap.transform, distance);
+        float txLoss = ap.CalculateAngleLoss(transform);
+        float rxLoss = CalculateAngleLoss(ap.transform);
 
         float receivedPower =
             ap.GetEIRP()
             + antennaGain
             - fspl
-            - txAngleLoss
-            - rxAngleLoss
-            - obstacleLoss;
+            - txLoss
+            - rxLoss;
 
         return receivedPower;
-    }
-
-    float CalculateObstacleLoss(Transform target, float distance)
-    {
-        float loss = 0f;
-
-        RaycastHit[] hits = Physics.RaycastAll(
-            transform.position,
-            (target.position - transform.position).normalized,
-            distance
-        );
-
-        foreach (var hit in hits)
-        {
-            ObstacleMaterial mat = hit.collider.GetComponent<ObstacleMaterial>();
-            if (mat != null)
-                loss += mat.GetLoss();
-        }
-
-        return loss;
     }
 
     float CalculateAngleLoss(Transform target)
@@ -242,5 +343,25 @@ public void Connect(WirelessDevice ap, string inputPassword)
         return 25f;
     }
 
-    #endregion
+    // ================= EXTRA =================
+    public string GetFrequencyBand()
+    {
+        return frequency < 3000 ? "2.4 GHz" : "5 GHz";
+    }
+
+    public float CalculateDistance()
+    {
+        if (connectedAP == null) return 0f;
+        return Vector3.Distance(transform.position, connectedAP.transform.position);
+    }
+
+    public int GetConnectedStationsCount()
+    {
+        return connectedClients.Count;
+    }
+
+    public string GetAPMacAddress()
+    {
+        return "00:11:22:33:44:55";
+    }
 }
