@@ -10,6 +10,7 @@ public class NetworkPort : MonoBehaviour
 
     private void Awake()
     {
+        // Mencari NetworkDevice di object parent-nya
         parentDevice = GetComponentInParent<NetworkDevice>();
     }
 
@@ -17,10 +18,15 @@ public class NetworkPort : MonoBehaviour
     {
         if (other == null) return;
 
+        // Menyambungkan kedua port secara dua arah
         connectedPort = other;
         other.connectedPort = this;
 
-        InternetManager.Instance.RefreshInternetState();
+        // Beritahu Manager untuk mengkalkulasi ulang sebaran Listrik & Internet
+        if (InternetManager.Instance != null)
+        {
+            InternetManager.Instance.RefreshNetworkState();
+        }
     }
 
     public void Disconnect()
@@ -29,9 +35,14 @@ public class NetworkPort : MonoBehaviour
 
         NetworkPort temp = connectedPort;
 
+        // Memutuskan sambungan kedua belah pihak
         connectedPort = null;
         temp.connectedPort = null;
 
-        InternetManager.Instance.RefreshInternetState();
+        // Beritahu Manager bahwa ada kabel yang dicabut
+        if (InternetManager.Instance != null)
+        {
+            InternetManager.Instance.RefreshNetworkState();
+        }
     }
 }

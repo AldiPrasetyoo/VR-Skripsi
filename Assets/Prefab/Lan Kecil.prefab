@@ -126,7 +126,6 @@ GameObject:
   - component: {fileID: 4488456561363411616}
   - component: {fileID: 2128191803370778223}
   - component: {fileID: 408326559905959679}
-  - component: {fileID: 5585395304489779533}
   m_Layer: 0
   m_Name: Start
   m_TagString: Untagged
@@ -405,20 +404,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkPort
   parentDevice: {fileID: 2558192276369040013}
   connectedPort: {fileID: 0}
---- !u!114 &5585395304489779533
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 162902154969405948}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0e49b521a0340064e8f7a132ffa354f0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::JaringanKabel
-  connections: []
-  hasInternet: 0
 --- !u!1 &571189435289362290
 GameObject:
   m_ObjectHideFlags: 0
@@ -754,7 +739,6 @@ GameObject:
   - component: {fileID: 1476679171408541122}
   - component: {fileID: 4037078560945459480}
   - component: {fileID: 3916783304991424133}
-  - component: {fileID: 4804101070923915106}
   - component: {fileID: 7287523662764742147}
   m_Layer: 0
   m_Name: End
@@ -1020,20 +1004,6 @@ MonoBehaviour:
   m_StartingSingleGrabTransformers: []
   m_StartingMultipleGrabTransformers: []
   m_AddDefaultGrabTransformers: 1
---- !u!114 &4804101070923915106
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2532937707774075398}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0e49b521a0340064e8f7a132ffa354f0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::JaringanKabel
-  connections: []
-  hasInternet: 0
 --- !u!114 &7287523662764742147
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2383,6 +2353,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkDevice
   isInternetSource: 0
   hasInternet: 0
+  isPowerSource: 0
+  hasPower: 0
+  supportPoE: 1
+  requirePowerToWork: 0
 --- !u!1 &8580438000251122047
 GameObject:
   m_ObjectHideFlags: 0

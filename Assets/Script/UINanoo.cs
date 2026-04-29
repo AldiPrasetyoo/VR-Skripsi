@@ -6,14 +6,40 @@ using System.Collections.Generic;
 
 public class UI_WirelessDevice : MonoBehaviour
 {
+
+    #region Device
     [Header("Device")]
     public WirelessDevice device;
 
+    private List<WirelessDevice> foundDevices = new List<WirelessDevice>();
+    private List<WirelessDevice> scanned = new List<WirelessDevice>();
+    bool isUpdating = false;
+
+    [Header("Select Device UI")]
+    public GameObject selectDevicePanel;
+    public Transform deviceContainer;
+    public GameObject deviceItemPrefab;
+
+    #endregion
+
+    #region Navbar
+    
     [Header("Navbar Buttons")]
     public Button mainBtn;
     public Button wirelessBtn;
     public Button networkBtn;
     public Button systemBtn;
+
+    [Header("Panels")]
+    public GameObject navbarPanel;
+    public GameObject mainPanel;
+    public GameObject wirelessPanel;
+    public GameObject networkPanel;
+    public GameObject systemPanel;
+
+    #endregion
+
+    #region Login
 
     // ================= LOGIN =================
     [Header("Login")]
@@ -24,14 +50,9 @@ public class UI_WirelessDevice : MonoBehaviour
     public TMP_InputField usernameInput;
     public TMP_InputField passwordInput;
 
-    // ================= NAVBAR =================
-    [Header("Panels")]
-    public GameObject navbarPanel;
-    public GameObject mainPanel;
-    public GameObject wirelessPanel;
-    public GameObject networkPanel;
-    public GameObject systemPanel;
+    #endregion
 
+    #region UI Elements
     // ================= MAIN UI =================
     [Header("Main UI")]
     public TextMeshProUGUI deviceNameText;
@@ -44,6 +65,9 @@ public class UI_WirelessDevice : MonoBehaviour
     public TextMeshProUGUI frequencyBandText;
     public TextMeshProUGUI distanceText;
     public TextMeshProUGUI TXPowerText;
+    public TextMeshProUGUI wlan0MacText;
+    public TextMeshProUGUI lan0MacText;
+    public TextMeshProUGUI lan1MacText;
     public TextMeshProUGUI lan0dan1Text;
     public TextMeshProUGUI APMacText;
     public TextMeshProUGUI connectionText;
@@ -110,7 +134,6 @@ public class UI_WirelessDevice : MonoBehaviour
     public TMP_InputField stationPasswordInput;
 
     private Coroutine scanRoutine;
-    private List<WirelessDevice> scanned = new List<WirelessDevice>();
 
     // ================= NETWORK =================
     [Header("Network UI")]
@@ -135,46 +158,63 @@ public class UI_WirelessDevice : MonoBehaviour
     public TMP_InputField nameDeviceInput;
     public Button changeSystemButton;
 
+    #endregion
+
+
+    #region Unity Methods
+    // ================= START =================
+
     void Start()
-    {
-        loginPanel.SetActive(true);
+    {   
+        selectDevicePanel.SetActive(true);
+        loginPanel.SetActive(false);
         mainUI.SetActive(false);
-
-        if (device == null) return;
-
-        modeDropdown.onValueChanged.AddListener(OnModeChanged);
-        modeDropdown.value = (int)device.mode;
-
-        RefreshWirelessUI();
-        RefreshNetworkUI();
-        RefreshMainUI();
-
-        if (agreeToggle != null)
-        {
-            agreeToggle.onValueChanged.AddListener(OnToggleChanged);
-            OnToggleChanged(agreeToggle.isOn);
-        }
-
-        outputPowerSlider.onValueChanged.AddListener(OnSliderChanged);
-        outputPowerText.onEndEdit.AddListener(OnInputChanged);
-
-        // sync awal
-        SyncUI(outputPowerSlider.value);
+        
+        StartScanLoop();
     }
 
-    bool isUpdating = false;
-
-void OnSliderChanged(float value)
+    void InitDevice()
 {
+    if (device == null) return;
+
+    // ================= BIND UI =================
+    modeDropdown.onValueChanged.RemoveAllListeners();
+    modeDropdown.onValueChanged.AddListener(OnModeChanged);
+    modeDropdown.SetValueWithoutNotify((int)device.mode);
+
+    outputPowerSlider.onValueChanged.RemoveAllListeners();
+    outputPowerSlider.onValueChanged.AddListener(OnSliderChanged);
+
+    outputPowerText.onEndEdit.RemoveAllListeners();
+    outputPowerText.onEndEdit.AddListener(OnInputChanged);
+
+    nameDeviceInput.text = device.deviceName;
+
+    if (agreeToggle != null)
+    {
+        agreeToggle.onValueChanged.RemoveAllListeners();
+        agreeToggle.onValueChanged.AddListener(OnToggleChanged);
+        OnToggleChanged(agreeToggle.isOn);
+    }
+
+    SyncUI(outputPowerSlider.value);
+
+    RefreshWirelessUI();
+    RefreshNetworkUI();
+    RefreshMainUI();
+}
+
+    void OnSliderChanged(float value)
+    {
     if (isUpdating) return;
 
     isUpdating = true;
     SyncUI(value);
     isUpdating = false;
-}
+    }
 
-void OnInputChanged(string text)
-{
+    void OnInputChanged(string text)
+    {
     if (isUpdating) return;
 
     float value;
@@ -186,27 +226,79 @@ void OnInputChanged(string text)
         SyncUI(value);
         isUpdating = false;
     }
-}
-
-void SyncUI(float value)
-{
-    outputPowerSlider.value = value;
-    outputPowerText.text = value.ToString("F0"); // tanpa desimal
-}
-
-    void SetActiveButton(Button activeBtn)
-    {
-    // semua jadi abu dulu
-    mainBtn.image.color = Color.white;
-    wirelessBtn.image.color = Color.white;
-    networkBtn.image.color = Color.white;
-    systemBtn.image.color = Color.white;
-
-    // yang aktif jadi hitam
-    activeBtn.image.color = Color.grey;
     }
 
-    // ================= LOGIN =================
+    void SyncUI(float value)
+    {
+    outputPowerSlider.value = value;
+    outputPowerText.text = value.ToString("F0"); // tanpa desimal
+    }
+
+    #endregion
+ 
+    #region Device Management
+
+    void StartScanLoop()
+{
+    if (scanRoutine != null)
+        StopCoroutine(scanRoutine);
+
+    scanRoutine = StartCoroutine(ScanLoop());
+}
+
+IEnumerator ScanLoop()
+{
+    while (true)
+    {
+        ScanDevices();
+        yield return new WaitForSeconds(1f); // refresh tiap 1 detik
+    }
+}
+
+    public void AddDeviceToUI(WirelessDevice d)
+    {
+    if (foundDevices.Contains(d)) return;
+
+    foundDevices.Add(d);
+
+    GameObject item = Instantiate(deviceItemPrefab, deviceContainer);
+
+    deviceItem ui = item.GetComponent<deviceItem>();
+    ui.Setup(d, this);
+    }
+
+    void ScanDevices()
+{
+    foundDevices.Clear();
+
+    foreach (Transform child in deviceContainer)
+        Destroy(child.gameObject);
+
+    WirelessDevice[] devices = FindObjectsOfType<WirelessDevice>();
+
+    foreach (var d in devices)
+    {
+        AddDeviceToUI(d);
+    }
+}
+
+    public void SelectDevice(WirelessDevice d)
+    {
+    device = d;
+
+    Debug.Log("Dipilih: " + d.deviceName);
+
+    selectDevicePanel.SetActive(false);
+    loginPanel.SetActive(true);
+
+    InitDevice();
+
+    }
+
+    #endregion
+
+    #region Authentication
+
     public void Login()
     {
         if (agreeToggle != null && !agreeToggle.isOn)
@@ -217,17 +309,40 @@ void SyncUI(float value)
             navbarPanel.SetActive(true);
             loginPanel.SetActive(false);
             mainUI.SetActive(true);
+             
+            usernameInput.text = "";
+            passwordInput.text = "";
+            agreeToggle.isOn = false;
+
             ShowMain();
         }
     }
 
+
+    public void Logout()
+    {
+    mainUI.SetActive(false);
+    navbarPanel.SetActive(false);
+    loginPanel.SetActive(false);
+    selectDevicePanel.SetActive(true);
+
+    usernameInput.text = "";
+    passwordInput.text = "";
+    agreeToggle.isOn = false;
+
+    Debug.Log("Logout berhasil");
+    }
+    
     void OnToggleChanged(bool state)
     {
         if (loginButton != null)
             loginButton.interactable = state;
     }
 
-    // ================= NAVBAR =================
+    #endregion
+
+    #region UI Navigation
+
     public void ShowMain()
     {
         mainPanel.SetActive(true);
@@ -273,22 +388,22 @@ void SyncUI(float value)
 
     }
 
-    // ================= MODE =================
-    void OnModeChanged(int value)
+    void SetActiveButton(Button activeBtn)
     {
-        device.SetMode(value);
+    // semua jadi abu dulu
+    mainBtn.image.color = Color.white;
+    wirelessBtn.image.color = Color.white;
+    networkBtn.image.color = Color.white;
+    systemBtn.image.color = Color.white;
 
-        RefreshWirelessUI();
-        RefreshNetworkUI();
-        RefreshMainUI();
-
-        if (device.mode == WirelessDevice.WirelessMode.Station)
-            StartAutoScan();
-        else
-            StopAutoScan();
+    // yang aktif jadi hitam
+    activeBtn.image.color = Color.grey;
     }
 
-    // ================= MAIN =================
+    #endregion
+
+    #region refresh UI
+
     void RefreshMainUI()
     {
         if (device == null) return;
@@ -302,6 +417,9 @@ void SyncUI(float value)
         frequencyBandText.text = device.GetFrequencyBand().ToString();
         distanceText.text = device.CalculateDistance().ToString("F2") + " m";
         TXPowerText.text = device.outputPower.ToString("F2") + " dBm";
+        wlan0MacText.text = device.wlan0Mac;
+        lan0MacText.text = device.lan0Mac;
+        lan1MacText.text = device.lan1Mac;
         lan0dan1Text.text = device.lan0Status + " / " + device.lan1Status;
         AIRMaxQuality.value = device.airMaxQuality;
         AIRMaxCapacity.value = device.airMaxCapacity;
@@ -317,12 +435,11 @@ void SyncUI(float value)
         {
             signalStrength.value = device.currentSignal;
             signalStrengthText.text = device.currentSignal.ToString("F2") + " dBm";
-            horizonalVerticalText.text = "H: " + device.horizontalSignal.ToString("F2") + " dBm / V: " + device.verticalSignal.ToString("F2") + " dBm";
-            TXRXText.text = "TX: " + device.txRate.ToString("F2") + " Mbps / RX: " + device.rxRate.ToString("F2") + " Mbps";
+            horizonalVerticalText.text = device.horizontalSignal.ToString("F2") + " / " + device.verticalSignal.ToString("F2") + " dBm";
+            TXRXText.text = device.txRate.ToString("F2") + " / " + device.rxRate.ToString("F2") + " Mbps";
         }
     }
 
-    // ================= WIRELESS (AP vs STATION TOGGLE UI) =================
     void RefreshWirelessUI()
     {
     bool isAP = device.mode == WirelessDevice.WirelessMode.AccessPoint;
@@ -462,7 +579,39 @@ else
 
     }
 
-    public void OnManagementIPChanged(int dropdownIndex)
+    void RefreshNetworkUI()
+    {
+    if (device == null) return;
+
+    networkModeDropdown.value = (int)device.networkMode;
+    disableNetworkDropdown.value = device.disableNetwork ? 1 : 0;
+    ipAddressInput.text = device.ipAddress;
+    netmaskInput.text = device.netmask;
+    gatewayInput.text = device.gateway;
+    primaryDNSInput.text = device.primaryDNS;
+    secondaryDNSInput.text = device.secondaryDNS;
+    mtuInput.text = device.mtu.ToString();
+    }
+
+    #endregion
+
+    #region UI Event Handlers
+
+    void OnModeChanged(int value)
+    {
+        device.SetMode(value);
+
+        RefreshWirelessUI();
+        RefreshNetworkUI();
+        RefreshMainUI();
+
+        if (device.mode == WirelessDevice.WirelessMode.Station)
+            StartAutoScan();
+        else
+            StopAutoScan();
+    }
+
+    public void OnManagementIPChanged()
     {
         int dropManagementIPIndex = managementIPAddressDropdown.value;
     if (dropManagementIPIndex == 0)
@@ -513,73 +662,7 @@ else
         }
     }
 
-    // ================= NETWORK =================
-    void RefreshNetworkUI()
-    {
-    if (device == null) return;
-
-    networkModeDropdown.value = (int)device.networkMode;
-    disableNetworkDropdown.value = device.disableNetwork ? 1 : 0;
-    ipAddressInput.text = device.ipAddress;
-    netmaskInput.text = device.netmask;
-    gatewayInput.text = device.gateway;
-    primaryDNSInput.text = device.primaryDNS;
-    secondaryDNSInput.text = device.secondaryDNS;
-    mtuInput.text = device.mtu.ToString();
-    }
-
-    // ================= AUTO SCAN =================
-    void StartAutoScan()
-    {
-        if (scanRoutine != null)
-            StopCoroutine(scanRoutine);
-
-        scanRoutine = StartCoroutine(AutoScan());
-    }
-
-    void StopAutoScan()
-    {
-        if (scanRoutine != null)
-            StopCoroutine(scanRoutine);
-    }
-
-    IEnumerator AutoScan()
-    {
-        while (true)
-        {
-            Scan();
-            yield return new WaitForSeconds(2f);
-        }
-    }
-
-    // ================= SCAN =================
-    public void Scan()
-    {
-        scanned.Clear();
-
-        if (networkDropdown == null) return;
-
-        networkDropdown.ClearOptions();
-
-        List<string> options = new List<string>();
-
-        foreach (var ap in NetworksRegistry.activeAPs)
-        {
-            if (ap == device) continue;
-
-            scanned.Add(ap);
-            options.Add(ap.ssid + " (Ch " + ap.channel + ")");
-        }
-
-        if (options.Count == 0)
-            options.Add("No Network Found");
-
-        networkDropdown.AddOptions(options);
-
-        RefreshWirelessUI();
-    }
-
-public void Connect()
+    public void Connect()
 {
     Debug.Log("=== CONNECT FUNCTION MASUK ===");
     if (scanned.Count == 0)
@@ -615,7 +698,37 @@ public void Connect()
     RefreshMainUI();
 }
 
-    public void ChangeWireless()
+        public void Scan()
+    {
+        scanned.Clear();
+
+        if (networkDropdown == null) return;
+
+        networkDropdown.ClearOptions();
+
+        List<string> options = new List<string>();
+
+        foreach (var ap in NetworksRegistry.activeAPs)
+        {
+            if (ap == device) continue;
+
+            scanned.Add(ap);
+            options.Add(ap.ssid + " (Ch " + ap.channel + ")");
+        }
+
+        if (options.Count == 0)
+            options.Add("No Network Found");
+
+        networkDropdown.AddOptions(options);
+
+        RefreshWirelessUI();
+    }
+
+    #endregion
+
+    #region Change Handlers
+
+     public void ChangeWireless()
     {
         device.WDS = WDSToggle.isOn;
         device.countryCode = countryCodeDropdown.options[countryCodeDropdown.value].text;
@@ -668,8 +781,39 @@ public void Connect()
 
     public void changeSystem()
     {
-        device.deviceName = nameDeviceInput.text;
-
+        device.SetDeviceName(nameDeviceInput.text);
+        nameDeviceInput.text = device.deviceName;
         RefreshMainUI();
     }
+
+    #endregion
+
+    #region Campur
+
+     void StartAutoScan()
+    {
+        if (scanRoutine != null)
+            StopCoroutine(scanRoutine);
+
+        scanRoutine = StartCoroutine(AutoScan());
+    }
+
+    void StopAutoScan()
+    {
+        if (scanRoutine != null)
+            StopCoroutine(scanRoutine);
+    }
+
+    IEnumerator AutoScan()
+    {
+        while (true)
+        {
+            Scan();
+            yield return new WaitForSeconds(2f);
+        }
+    
+    }
+
+    #endregion
+
 }

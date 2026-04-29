@@ -1,11 +1,12 @@
 using UnityEngine;
+using HPhysic;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(NetworkDevice))]
 public class WirelessDevice : MonoBehaviour
 {
     // ================= ENUM =================
-    public enum WirelessMode { Station, AccessPoint, APRepeater }
+    public enum WirelessMode { Station, AccessPoint }
     public enum IEEE80211Mode { AN_MIXED }
     public enum ChannelWidth { Auto, CW20Mhz, CW40Mhz }
     public enum ChannelShift { None }
@@ -19,35 +20,37 @@ public class WirelessDevice : MonoBehaviour
     // ================= MODE =================
     public WirelessMode mode = WirelessMode.Station;
 
-    private NetworkDevice networkDevice;
+    public Sprite deviceIcon;
+
+    [HideInInspector] public NetworkDevice networkDevice;
     private bool lastInternetState = false;
 
     // ================= GENERAL =================
-    public string deviceName = "NanoStation";
+    public string deviceName;
     public bool isConnected;
 
     public WirelessDevice connectedAP;
     public List<WirelessDevice> connectedClients = new List<WirelessDevice>();
 
     public string ipAddress = "0.0.0.0";
-    public string gateway = "-";
+    public string gateway = "0.0.0.0";
+
+    // 🔥 MAC ADDRESS
+    public string wlan0Mac;
+    public string lan0Mac;
+    public string lan1Mac;
 
     // ================= NETWORK =================
     public NetworkMode networkMode;
     public bool disableNetwork;
 
-    public string netmask = "255.255.255.0";
-    public string primaryDNS = "8.8.8.8";
-    public string secondaryDNS = "8.8.4.4";
+    public string netmask = "0.0.0.0";
+    public string primaryDNS = "0.0.0.0";
+    public string secondaryDNS = "0.0.0.0";
     public int mtu = 1500;
 
-    public bool useDHCP = true;       // DHCP / Static
-    public bool isDHCPServer = true;  // khusus AP
-
-    // ================= DHCP =================
-    public string dhcpStartIP = "192.168.1.2";
-    public string dhcpEndIP = "192.168.1.254";
-    private int dhcpCounter = 2;
+    // ================= POWER =================
+    public bool hasPower;
 
     // ================= RADIO =================
     public float outputPower = 10f;
@@ -70,13 +73,16 @@ public class WirelessDevice : MonoBehaviour
     public float rxRate;
     public float transmitCCQ = 100f;
 
+    public float latency;
+    public float packetLoss;
+
     // ================= AIRMAX =================
     public float airMaxQuality = 100f;
     public float airMaxCapacity = 100f;
 
     // ================= LAN =================
-    public string lan0Status = "Connected";
-    public string lan1Status = "Connected";
+    public string lan0Status = "Unplugged";
+    public string lan1Status = "Unplugged";
 
     // ================= WIRELESS =================
     public string ssid = "";
@@ -107,12 +113,57 @@ public class WirelessDevice : MonoBehaviour
     const float DisconnectThreshold = -90f;
     const float MaxEIRP_Indonesia = 36f;
 
+    // ================= Kabel =================
+
+    [Header("PORT REFERENCES")]
+    public Connector lan0Connector;
+    public Connector lan1Connector;
+
     // ================= UNITY =================
     void Awake()
     {
         networkDevice = GetComponent<NetworkDevice>();
+
+        deviceName = gameObject.name;
+
+        string baseMac = GenerateMacAddress();
+        wlan0Mac = baseMac;
+        lan0Mac = IncrementMac(baseMac, 5);
+        lan1Mac = IncrementMac(baseMac, 6);
     }
 
+    public void SetDeviceName(string newName)
+    {
+        deviceName = newName;
+        gameObject.name = newName;
+    }
+
+    string IncrementMac(string mac, int increment)
+    {
+        string[] parts = mac.Split(':');
+        int lastByte = System.Convert.ToInt32(parts[5], 16);
+        lastByte = (lastByte + increment) % 256;
+        parts[5] = lastByte.ToString("X2");
+        return string.Join(":", parts);
+    }
+
+    string GenerateMacAddress()
+    {
+        byte[] mac = new byte[6];
+
+        mac[0] = 0x04;
+        mac[1] = 0x18;
+        mac[2] = 0xD6;
+
+        System.Random rand = new System.Random();
+        mac[3] = (byte)rand.Next(0, 256);
+        mac[4] = (byte)rand.Next(0, 256);
+        mac[5] = (byte)rand.Next(0, 256);
+
+        return System.BitConverter.ToString(mac).Replace("-", ":");
+    }
+
+    // CATATAN: Pastikan class NetworksRegistry milikmu tidak bermasalah
     void OnEnable()
     {
         if (mode == WirelessMode.AccessPoint)
@@ -126,40 +177,85 @@ public class WirelessDevice : MonoBehaviour
 
     void Update()
     {
+        UpdateLANStatus();
         currentEIRP = GetEIRP();
 
-        if (mode != WirelessMode.Station)
-            return;
+        hasPower = networkDevice.hasPower;
 
+        if (!hasPower)
+        {
+            isConnected = false;
+            currentSignal = -120f;
+            txRate = 0; rxRate = 0; transmitCCQ = 0; latency = 0; packetLoss = 100;
+
+            if (mode == WirelessMode.Station)
+                SetStationInternetBridge(false);
+
+            return;
+        }
+
+        noiseFloor = -95f + Random.Range(-5f, 5f);
+
+        // 2. === ACCESS POINT MODE ===
+        if (mode == WirelessMode.AccessPoint)
+        {
+            return;
+        }
+
+        // 3. === STATION MODE ===
         if (connectedAP == null)
         {
             isConnected = false;
-            SetInternet(false);
+            SetStationInternetBridge(false);
             return;
         }
 
         currentSignal = CalculateSignal(connectedAP);
-
         horizontalSignal = currentSignal + Random.Range(-2f, 2f);
         verticalSignal = currentSignal + Random.Range(-2f, 2f);
 
-        txRate = Random.Range(50f, 150f);
-        rxRate = Random.Range(50f, 150f);
+        float signalQuality = Mathf.InverseLerp(-90f, -40f, currentSignal);
+        float noiseImpact = Mathf.InverseLerp(-100f, -70f, noiseFloor);
+        float baseRate = (channelWidth == ChannelWidth.CW40Mhz) ? 300f : 150f;
+        float distance = Vector3.Distance(transform.position, connectedAP.transform.position);
+        float distanceFactor = Mathf.Clamp01(1f - (distance / 200f));
+        float qualityFactor = Mathf.Clamp01(signalQuality * distanceFactor * (1f - noiseImpact));
+
+        transmitCCQ = qualityFactor * 100f;
+
+        float snr = currentSignal - noiseFloor;
+        float snrFactor = Mathf.InverseLerp(0f, 40f, snr);
+
+        txRate = baseRate * snrFactor;
+        rxRate = baseRate * snrFactor;
+
+        latency = 1f + (1f - qualityFactor) * 100f + Random.Range(0f, 5f);
+        packetLoss = Mathf.Clamp01(1f - qualityFactor) * 100f;
 
         if (currentSignal < DisconnectThreshold)
         {
-            Debug.Log($"🔴 DISCONNECTED (Signal weak: {currentSignal:F1} dBm)");
+            Debug.Log($"🔴 DISCONNECTED (Signal {currentSignal:F1} dBm)");
             Disconnect();
             return;
         }
 
         isConnected = true;
 
-        bool internetState = connectedAP.networkDevice.hasInternet;
-        SetInternet(internetState);
+        bool validNetwork = IsSameSubnet(ipAddress, connectedAP.ipAddress, netmask) && gateway == connectedAP.ipAddress;
+        
+        bool apHasInternet = connectedAP.hasPower && connectedAP.networkDevice.hasInternet;
+
+        bool internetState = validNetwork && apHasInternet;
+
+        SetStationInternetBridge(internetState);
     }
 
-    // ================= MODE =================
+    void UpdateLANStatus()
+    {
+        lan0Status = (lan0Connector != null && lan0Connector.ConnectedTo != null) ? "Connected" : "Unplugged";
+        lan1Status = (lan1Connector != null && lan1Connector.ConnectedTo != null) ? "Connected" : "Unplugged";
+    }
+    
     public void SetMode(int modeIndex)
     {
         NetworksRegistry.UnregisterAP(this);
@@ -168,56 +264,29 @@ public class WirelessDevice : MonoBehaviour
         mode = (WirelessMode)modeIndex;
 
         if (mode == WirelessMode.AccessPoint)
-        {
             NetworksRegistry.RegisterAP(this);
-
-            if (useDHCP)
-            {
-                ipAddress = "192.168.0." + Random.Range(2, 254);
-                gateway = "192.168.0.1";
-                Debug.Log($"🌐 AP DHCP IP → {ipAddress}");
-            }
-            else
-            {
-                ipAddress = "192.168.1.1";
-                gateway = "-";
-                Debug.Log("🟢 AP Static IP → 192.168.1.1");
-            }
-        }
-        else
-        {
-            if (useDHCP)
-                ipAddress = "0.0.0.0";
-
-            Debug.Log("🟡 Mode Station aktif");
-        }
     }
 
-    // ================= DHCP =================
-    string GenerateDHCPIP()
-    {
-        string[] parts = ipAddress.Split('.');
-        string baseIP = parts[0] + "." + parts[1] + "." + parts[2] + ".";
-        string ip = baseIP + dhcpCounter;
-
-        dhcpCounter++;
-        if (dhcpCounter > 254) dhcpCounter = 2;
-
-        return ip;
-    }
-
-    // ================= CONNECTION =================
     public void Connect(WirelessDevice ap, string inputPassword)
     {
+        if (!hasPower)
+        {
+            Debug.Log("❌ Device tidak punya power (PoE)");
+            return;
+        }
+
+        if (!ap.hasPower)
+        {
+            Debug.Log("❌ AP mati (tidak ada power)");
+            return;
+        }
+
         if (mode != WirelessMode.Station) return;
         if (ap == null) return;
         if (ap.mode != WirelessMode.AccessPoint) return;
 
         if (!string.IsNullOrEmpty(lockToAPSSID) && ap.ssid != lockToAPSSID)
-        {
-            Debug.Log("❌ SSID tidak sesuai lock");
             return;
-        }
 
         if (ap.securityMode != SecurityMode.None && ap.password != inputPassword)
         {
@@ -232,31 +301,6 @@ public class WirelessDevice : MonoBehaviour
         ap.connectedClients.Add(this);
 
         isConnected = true;
-
-        // ===== IP LOGIC =====
-        if (useDHCP)
-        {
-            if (ap.isDHCPServer)
-            {
-                ipAddress = ap.GenerateDHCPIP();
-                gateway = ap.ipAddress;
-                primaryDNS = ap.primaryDNS;
-                secondaryDNS = ap.secondaryDNS;
-
-                Debug.Log($"📡 DHCP → {ipAddress}");
-            }
-            else
-            {
-                Debug.Log("❌ AP tidak punya DHCP");
-                ipAddress = "0.0.0.0";
-            }
-        }
-        else
-        {
-            Debug.Log($"📡 Static IP → {ipAddress}");
-        }
-
-        SetInternet(ap.networkDevice.hasInternet);
     }
 
     public void Disconnect()
@@ -267,32 +311,29 @@ public class WirelessDevice : MonoBehaviour
         connectedAP = null;
         isConnected = false;
 
-        if (useDHCP)
-        {
-            ipAddress = "0.0.0.0";
-            gateway = "-";
-        }
+        ipAddress = "0.0.0.0";
+        gateway = "0.0.0.0";
 
-        SetInternet(false);
+        SetStationInternetBridge(false);
     }
 
-    // ================= INTERNET =================
-    void SetInternet(bool state)
+    void SetStationInternetBridge(bool state)
     {
-        networkDevice.hasInternet = state;
-
         if (lastInternetState != state)
         {
             lastInternetState = state;
+            networkDevice.isInternetSource = state;
 
             if (state && connectedAP != null)
-                Debug.Log($"🟢 GOT INTERNET via {connectedAP.deviceName}");
+                Debug.Log($"🟢 {deviceName} GOT INTERNET via {connectedAP.deviceName} (Wireless Bridge Active)");
             else
-                Debug.Log("🔴 LOST INTERNET");
+                Debug.Log($"🔴 {deviceName} LOST INTERNET (Wireless Bridge Closed)");
+
+            if (InternetManager.Instance != null)
+                InternetManager.Instance.RefreshNetworkState();
         }
     }
 
-    // ================= SIGNAL =================
     public float GetEIRP()
     {
         float eirp = outputPower + antennaGain;
@@ -304,6 +345,35 @@ public class WirelessDevice : MonoBehaviour
         }
 
         return eirp;
+    }
+
+    bool IsSameSubnet(string ip1, string ip2, string netmask)
+    {
+        string[] ipA = ip1.Split('.');
+        string[] ipB = ip2.Split('.');
+        string[] mask = netmask.Split('.');
+
+        if (ipA.Length != 4 || ipB.Length != 4 || mask.Length != 4) return false;
+
+        for (int i = 0; i < 4; i++)
+        {
+            int a = int.Parse(ipA[i]) & int.Parse(mask[i]);
+            int b = int.Parse(ipB[i]) & int.Parse(mask[i]);
+
+            if (a != b)
+                return false;
+        }
+
+        return true;
+    }
+
+    float GetChannelInterference(WirelessDevice ap)
+    {
+        int channelDiff = Mathf.Abs(channel - ap.channel);
+
+        if (channelDiff == 0) return 15f;
+        if (channelDiff <= 2) return 8f;
+        return 0f;
     }
 
     float CalculateSignal(WirelessDevice ap)
@@ -319,12 +389,15 @@ public class WirelessDevice : MonoBehaviour
         float txLoss = ap.CalculateAngleLoss(transform);
         float rxLoss = CalculateAngleLoss(ap.transform);
 
+        float interference = GetChannelInterference(ap);
+
         float receivedPower =
             ap.GetEIRP()
             + antennaGain
             - fspl
             - txLoss
-            - rxLoss;
+            - rxLoss
+            - interference;
 
         return receivedPower;
     }
@@ -343,7 +416,6 @@ public class WirelessDevice : MonoBehaviour
         return 25f;
     }
 
-    // ================= EXTRA =================
     public string GetFrequencyBand()
     {
         return frequency < 3000 ? "2.4 GHz" : "5 GHz";
@@ -362,6 +434,6 @@ public class WirelessDevice : MonoBehaviour
 
     public string GetAPMacAddress()
     {
-        return "00:11:22:33:44:55";
+        return wlan0Mac;
     }
 }

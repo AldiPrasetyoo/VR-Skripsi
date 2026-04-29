@@ -558,6 +558,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkDevice
   isInternetSource: 0
   hasInternet: 0
+  isPowerSource: 0
+  hasPower: 0
+  supportPoE: 1
+  requirePowerToWork: 1
 --- !u!114 &1978403106890343056
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -571,17 +575,62 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WirelessDevice
   mode: 0
+  deviceIcon: {fileID: 396294556, guid: 575600c6b7b81ae4cba4358333fa5e0f, type: 3}
+  networkDevice: {fileID: 0}
+  deviceName: 
+  isConnected: 0
+  connectedAP: {fileID: 0}
+  connectedClients: []
+  ipAddress: 0.0.0.0
+  gateway: 0.0.0.0
+  wlan0Mac: 
+  lan0Mac: 
+  lan1Mac: 
+  networkMode: 0
+  disableNetwork: 0
+  netmask: 0.0.0.0
+  primaryDNS: 0.0.0.0
+  secondaryDNS: 0.0.0.0
+  mtu: 1500
+  hasPower: 0
   outputPower: 10
   antennaGain: 11
+  frequency: 2400
   beamWidth: 60
-  frequencyMHz: 2400
   channelWidth: 20
-  ssid: 
-  password: 
-  channel: 1
-  connectedAP: {fileID: 0}
+  channelShift: 0
   currentSignal: 0
   currentEIRP: 0
+  horizontalSignal: 0
+  verticalSignal: 0
+  noiseFloor: -95
+  txRate: 0
+  rxRate: 0
+  transmitCCQ: 100
+  latency: 0
+  packetLoss: 0
+  airMaxQuality: 100
+  airMaxCapacity: 100
+  lan0Status: Unplugged
+  lan1Status: Unplugged
+  ssid: 
+  password: 
+  WDS: 0
+  countryCode: 
+  ieee80211Mode: 0
+  extensionChannel: 0
+  channel: 1
+  freqScan: 0
+  calculateEIRP: 0
+  autoEIRP: 0
+  dataRateModule: 0
+  maxTXRate: 0
+  autoMaxTXRate: 0
+  securityMode: 0
+  wpaAuthMode: 0
+  lockToAPSSID: 
+  lan0Connector: {fileID: 5333891156740603904}
+  lan1Connector: {fileID: 2575477723389939214}
 --- !u!1 &1237113066810893099
 GameObject:
   m_ObjectHideFlags: 0
@@ -717,8 +766,9 @@ GameObject:
   - component: {fileID: 9202473427228198805}
   - component: {fileID: 2139409434859439816}
   - component: {fileID: 4048874794684983015}
+  - component: {fileID: 4948497817300731502}
   m_Layer: 0
-  m_Name: Ethernet.2
+  m_Name: Lan1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -740,6 +790,7 @@ Transform:
   - {fileID: 7715306782021783386}
   - {fileID: 4815491326652751874}
   - {fileID: 9120330381297475401}
+  - {fileID: 8489653657963562279}
   m_Father: {fileID: 7798670780787155533}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: -180}
 --- !u!114 &5398459707065043672
@@ -862,6 +913,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkPort
   parentDevice: {fileID: 1396607891511561644}
   connectedPort: {fileID: 0}
+--- !u!114 &4948497817300731502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1534325648890203795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f30b941b80562d646b5ecd440e6e44eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LanGhostPreview
+  femaleConnector: {fileID: 2575477723389939214}
+  ghostPoint: {fileID: 8489653657963562279}
+  detectRadius: 0.1
 --- !u!1 &1884622697077632677
 GameObject:
   m_ObjectHideFlags: 0
@@ -916,6 +982,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.35, y: 0.26456857, z: 0.2605364}
   m_Center: {x: 0.09999999, y: 0.020207215, z: -0.012525593}
+--- !u!1 &2445353079002762083
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3458965398433731291}
+  m_Layer: 0
+  m_Name: ghostPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3458965398433731291
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2445353079002762083}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0.0000000074505797, w: 1}
+  m_LocalPosition: {x: -0.007000734, y: 0.031999417, z: 0.7639993}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6211373110546299995}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2675624932077543529
 GameObject:
   m_ObjectHideFlags: 0
@@ -10844,8 +10941,9 @@ GameObject:
   - component: {fileID: 4353020719416349130}
   - component: {fileID: 8591969242199909694}
   - component: {fileID: 889369498663868847}
+  - component: {fileID: 8048179772857852151}
   m_Layer: 0
-  m_Name: Ethernet.1
+  m_Name: Lan0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10867,6 +10965,7 @@ Transform:
   - {fileID: 479282127801387011}
   - {fileID: 948555374608988360}
   - {fileID: 6832761802602784450}
+  - {fileID: 3458965398433731291}
   m_Father: {fileID: 7798670780787155533}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: -180}
 --- !u!114 &8065561448655257527
@@ -10989,6 +11088,52 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkPort
   parentDevice: {fileID: 1396607891511561644}
   connectedPort: {fileID: 0}
+--- !u!114 &8048179772857852151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6250590092312725828}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f30b941b80562d646b5ecd440e6e44eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  femaleConnector: {fileID: 5333891156740603904}
+  ghostPoint: {fileID: 3458965398433731291}
+  detectRadius: 0.1
+--- !u!1 &6413469244857118205
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8489653657963562279}
+  m_Layer: 0
+  m_Name: ghostPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8489653657963562279
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6413469244857118205}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0.0000000074505797, w: 1}
+  m_LocalPosition: {x: -0.007000734, y: 0.031999417, z: 0.7639993}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2435035350721439745}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6493023580367856707
 GameObject:
   m_ObjectHideFlags: 0
