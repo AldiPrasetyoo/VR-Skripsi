@@ -79,8 +79,19 @@ public class UI_WirelessDevice : MonoBehaviour
     public TextMeshProUGUI transmitCCQText;
     public TextMeshProUGUI TXRXText;
 
+    public TextMeshProUGUI AirMaxQualityText;
+    public TextMeshProUGUI AirMaxCapacityText;
     public Slider AIRMaxQuality;
     public Slider AIRMaxCapacity;
+
+    [Header("Signal Bars (10)")]
+    public Image[] signalBars;
+    public Image[] signalBarsPersenQuality;
+    public Image[] signalBarsPersenCapacity;
+    public Color offColor = new Color(0.2f, 0.2f, 0.2f, 0.5f); 
+    public Color weakColor = Color.red;    
+    public Color fairColor = Color.yellow;  
+    public Color strongColor = Color.green;
 
     // ================= WIRELESS =================
     [Header("Wireless")]
@@ -88,26 +99,25 @@ public class UI_WirelessDevice : MonoBehaviour
 
     public Toggle WDSToggle;
     public TMP_InputField SSIDInput;
-    public TMP_Dropdown hasilScanDropdown;
 
     public TMP_Dropdown countryCodeDropdown;
     public Button scanButton;
     public TMP_InputField lockToAPInput;
-    public TMP_Text lockToAPInputText;
+    public Image lockToAPInputText;
     public TMP_Dropdown IEE80211Dropdown;
     public TMP_Dropdown channelWidthDropdown;
     public TMP_Dropdown channelShiftDropdown;
-    public TMP_Text channelShiftDropdownText;
+    public Image channelShiftDropdownText;
     public TMP_Dropdown frequencyDropdown;
-    public TMP_Text frequencyDropdownText;
+    public Image frequencyDropdownText;
     public TMP_Dropdown extensionChannelDropdown;
-    public TMP_Text extensionChannelDropdownText;
+    public Image extensionChannelDropdownText;
 
     public Toggle freqScanToggle;
     public Toggle calculateEIRPToggle;
-    public TMP_Text calculateEIRPToggleText;
+    public Image calculateEIRPToggleText;
     public Toggle autoEIRPToggle;
-    public TMP_Text autoEIRPToggleText;
+    public Image autoEIRPToggleText;
 
     public TMP_InputField antennaGainInput;
     public Slider outputPowerSlider;
@@ -122,6 +132,9 @@ public class UI_WirelessDevice : MonoBehaviour
     public TMP_Text WPAAuthDropdownText;
     public TMP_Text passwordText;
 
+    public TMP_Text WPAttk2;
+    public TMP_Text Passttk2;
+
     public TMP_Dropdown securityDropdown;
     public TMP_Dropdown WPAAuthDropdown;
     public TMP_InputField passwordTMP_InputField;
@@ -131,7 +144,6 @@ public class UI_WirelessDevice : MonoBehaviour
     // ================= STATION SUPPORT =================
     [Header("Station UI")]
     public TMP_Dropdown networkDropdown;
-    public TMP_InputField stationPasswordInput;
 
     private Coroutine scanRoutine;
 
@@ -162,6 +174,22 @@ public class UI_WirelessDevice : MonoBehaviour
 
 
     #region Unity Methods
+    void Update()
+    {
+        if (mainPanel.activeSelf && device != null)
+        {
+            signalStrengthText.text = device.currentSignal.ToString("F2") + " dBm";
+            noiseFloorText.text = device.noiseFloor.ToString("F2") + " dBm";
+            horizonalVerticalText.text = device.horizontalSignal.ToString("F2") + " / " + device.verticalSignal.ToString("F2") + " dBm";
+            TXRXText.text = device.txRate.ToString("F2") + " / " + device.rxRate.ToString("F2") + " Mbps";
+            AirMaxQualityText.text = device.airMaxQuality.ToString("F0") + " %";
+            AirMaxCapacityText.text = device.airMaxCapacity.ToString("F0") + " %";
+
+            UpdateSignalBars(device.currentSignal);
+            UpdateSignalBarsPersenQuality(device.airMaxQuality);
+            UpdateSignalBarsPersenCapacity(device.airMaxCapacity);
+        }
+    }
     // ================= START =================
 
     void Start()
@@ -176,6 +204,8 @@ public class UI_WirelessDevice : MonoBehaviour
     void InitDevice()
 {
     if (device == null) return;
+
+    LoadAllUIFromDevice();
 
     // ================= BIND UI =================
     modeDropdown.onValueChanged.RemoveAllListeners();
@@ -286,8 +316,6 @@ IEnumerator ScanLoop()
     {
     device = d;
 
-    Debug.Log("Dipilih: " + d.deviceName);
-
     selectDevicePanel.SetActive(false);
     loginPanel.SetActive(true);
 
@@ -330,7 +358,6 @@ IEnumerator ScanLoop()
     passwordInput.text = "";
     agreeToggle.isOn = false;
 
-    Debug.Log("Logout berhasil");
     }
     
     void OnToggleChanged(bool state)
@@ -388,16 +415,16 @@ IEnumerator ScanLoop()
 
     }
 
+    public Color32 warnaAwal = new Color32(21, 30, 39, 255);
+
     void SetActiveButton(Button activeBtn)
     {
-    // semua jadi abu dulu
-    mainBtn.image.color = Color.white;
-    wirelessBtn.image.color = Color.white;
-    networkBtn.image.color = Color.white;
-    systemBtn.image.color = Color.white;
+    mainBtn.image.color = warnaAwal;
+    wirelessBtn.image.color = warnaAwal;
+    networkBtn.image.color = warnaAwal;
+    systemBtn.image.color = warnaAwal;
 
-    // yang aktif jadi hitam
-    activeBtn.image.color = Color.grey;
+    activeBtn.image.color = Color.blue;
     }
 
     #endregion
@@ -409,7 +436,9 @@ IEnumerator ScanLoop()
         if (device == null) return;
         deviceNameText.text = device.deviceName;
         networkModeText.text = networkModeDropdown.options[networkModeDropdown.value].text;;
-        wirelessModeText.text = device.mode.ToString();
+        wirelessModeText.text = device.WDS 
+                ? $"{device.mode} (WDS)" 
+                : device.mode.ToString();
         SSIDText.text = device.ssid;
         SecurityText.text = device.securityMode.ToString();
         channelFrequencyText.text = device.frequency + " MHz";
@@ -433,10 +462,97 @@ IEnumerator ScanLoop()
         }
         else
         {
-            signalStrength.value = device.currentSignal;
             signalStrengthText.text = device.currentSignal.ToString("F2") + " dBm";
             horizonalVerticalText.text = device.horizontalSignal.ToString("F2") + " / " + device.verticalSignal.ToString("F2") + " dBm";
             TXRXText.text = device.txRate.ToString("F2") + " / " + device.rxRate.ToString("F2") + " Mbps";
+        }
+    }
+
+    public void UpdateSignalBars(float currentDbm)
+    {
+        if (signalBars == null || signalBars.Length == 0) return;
+
+        int activeBars = 0;
+
+        if (currentDbm >= -45f) activeBars = 10;      
+        else if (currentDbm >= -50f) activeBars = 9;  
+        else if (currentDbm >= -55f) activeBars = 8;  
+        else if (currentDbm >= -60f) activeBars = 7;  
+        else if (currentDbm >= -65f) activeBars = 6;  
+        else if (currentDbm >= -70f) activeBars = 5;  
+        else if (currentDbm >= -75f) activeBars = 4;  
+        else if (currentDbm >= -80f) activeBars = 3;  
+        else if (currentDbm >= -85f) activeBars = 2;  
+        else if (currentDbm >= -90f) activeBars = 1;  
+        else activeBars = 0;                          
+
+        Color currentColor;
+        if (activeBars <= 3) currentColor = weakColor;
+        else if (activeBars <= 6) currentColor = fairColor;
+        else currentColor = strongColor;
+
+        for (int i = 0; i < signalBars.Length; i++)
+        {
+            if (i < activeBars) signalBars[i].color = currentColor;
+            else signalBars[i].color = offColor;
+        }
+    }
+    
+    public void UpdateSignalBarsPersenQuality(float currentSignalPersen)
+    {
+        if (signalBarsPersenQuality == null || signalBarsPersenQuality.Length == 0) return;
+
+        int activeBars = 0;
+
+        if (currentSignalPersen >= 90f) activeBars = 10;
+        else if (currentSignalPersen >= 80f) activeBars = 9;
+        else if (currentSignalPersen >= 70f) activeBars = 8;
+        else if (currentSignalPersen >= 60f) activeBars = 7;
+        else if (currentSignalPersen >= 50f) activeBars = 6;
+        else if (currentSignalPersen >= 40f) activeBars = 5;
+        else if (currentSignalPersen >= 30f) activeBars = 4;
+        else if (currentSignalPersen >= 20f) activeBars = 3;
+        else if (currentSignalPersen >= 10f) activeBars = 2;
+        else activeBars = 0;
+
+        Color currentColor;
+        if (activeBars <= 3) currentColor = weakColor;
+        else if (activeBars <= 6) currentColor = fairColor;
+        else currentColor = strongColor;
+
+        for (int i = 0; i < signalBarsPersenQuality.Length; i++)
+        {
+            if (i < activeBars) signalBarsPersenQuality[i].color = currentColor;
+            else signalBarsPersenQuality[i].color = offColor;
+        }
+    }
+
+    public void UpdateSignalBarsPersenCapacity(float currentSignalPersen)
+    {
+        if (signalBarsPersenCapacity == null || signalBarsPersenCapacity.Length == 0) return;
+
+        int activeBars = 0;
+
+        if (currentSignalPersen >= 90f) activeBars = 10;
+        else if (currentSignalPersen >= 80f) activeBars = 9;
+        else if (currentSignalPersen >= 70f) activeBars = 8;
+        else if (currentSignalPersen >= 60f) activeBars = 7;
+        else if (currentSignalPersen >= 50f) activeBars = 6;
+        else if (currentSignalPersen >= 40f) activeBars = 5;
+        else if (currentSignalPersen >= 30f) activeBars = 4;
+        else if (currentSignalPersen >= 20f) activeBars = 3;
+        else if (currentSignalPersen >= 10f) activeBars = 2;
+        else activeBars = 0;
+
+        Color currentColor;
+        if (activeBars <= 3) currentColor = weakColor;
+        else if (activeBars <= 6) currentColor = fairColor;
+        else currentColor = strongColor;
+
+        for (int i = 0; i < signalBarsPersenCapacity.Length; i++)
+        {
+            if (i < activeBars) signalBarsPersenCapacity[i].color = currentColor;
+            else signalBarsPersenCapacity[i].color = offColor;
         }
     }
 
@@ -481,46 +597,6 @@ IEnumerator ScanLoop()
     if (securityDropdown != null)
         securityDropdown.gameObject.SetActive(true);
 
-if (device.securityMode == WirelessDevice.SecurityMode.WPA2_AES)
-{
-    if (WPAAuthDropdown != null)
-    {
-        WPAAuthDropdownText.gameObject.SetActive(true);
-        WPAAuthDropdown.gameObject.SetActive(true);
-    }
-
-    if (device.wpaAuthMode == WirelessDevice.WPAAuthMode.PSK)
-    {
-        if (passwordTMP_InputField != null)
-        {
-            passwordText.gameObject.SetActive(true);
-            passwordTMP_InputField.gameObject.SetActive(true);
-        }
-    }
-    else
-    {
-        if (passwordTMP_InputField != null)
-        {
-            passwordText.gameObject.SetActive(false);
-            passwordTMP_InputField.gameObject.SetActive(false);
-        }
-    }
-}
-else
-{
-    if (WPAAuthDropdown != null)
-    {
-        WPAAuthDropdownText.gameObject.SetActive(false);
-        WPAAuthDropdown.gameObject.SetActive(false);
-    }
-
-    if (passwordTMP_InputField != null)
-    {
-        passwordText.gameObject.SetActive(false);
-        passwordTMP_InputField.gameObject.SetActive(false);
-    }
-}
-
    if (changeButton != null)
         changeButton.gameObject.SetActive(true);
 
@@ -553,8 +629,8 @@ else
     // =========================================================
     // 🟢 STATION MODE
     // =========================================================
-    if(hasilScanDropdown != null)
-        hasilScanDropdown.gameObject.SetActive(isStation);
+    if (networkDropdown != null)
+        networkDropdown.gameObject.SetActive(isStation);
 
     if (lockToAPInput != null)
         lockToAPInput.gameObject.SetActive(isStation);
@@ -597,6 +673,55 @@ else
 
     #region UI Event Handlers
 
+
+    void LoadAllUIFromDevice()
+{
+    if (device == null) return;
+
+    // ================= WIRELESS =================
+    modeDropdown.SetValueWithoutNotify((int)device.mode);
+
+    SSIDInput.text = device.ssid;
+
+    IEE80211Dropdown.SetValueWithoutNotify((int)device.ieee80211Mode);
+    channelWidthDropdown.SetValueWithoutNotify((int)device.channelWidth);
+    channelShiftDropdown.SetValueWithoutNotify((int)device.channelShift);
+
+    antennaGainInput.text = device.antennaGain.ToString("F0");
+
+    outputPowerSlider.value = device.outputPower;
+    outputPowerText.text = device.outputPower.ToString("F0");
+
+    WDSToggle.isOn = device.WDS;
+    freqScanToggle.isOn = device.freqScan;
+    calculateEIRPToggle.isOn = device.calculateEIRP;
+    autoEIRPToggle.isOn = device.autoEIRP;
+
+    dataRateModuleDropdown.SetValueWithoutNotify((int)device.dataRateModule);
+    maxTXRateDropdown.SetValueWithoutNotify((int)device.maxTXRate);
+    autoMaxTXRateToggle.isOn = device.autoMaxTXRate;
+
+    securityDropdown.SetValueWithoutNotify((int)device.securityMode);
+    WPAAuthDropdown.SetValueWithoutNotify((int)device.wpaAuthMode);
+    passwordTMP_InputField.text = device.password;
+
+    lockToAPInput.text = device.lockToAPSSID;
+
+    // ================= NETWORK =================
+    networkModeDropdown.SetValueWithoutNotify((int)device.networkMode);
+    disableNetworkDropdown.SetValueWithoutNotify(device.disableNetwork ? 1 : 0);
+
+    ipAddressInput.text = device.ipAddress;
+    netmaskInput.text = device.netmask;
+    gatewayInput.text = device.gateway;
+    primaryDNSInput.text = device.primaryDNS;
+    secondaryDNSInput.text = device.secondaryDNS;
+    mtuInput.text = device.mtu.ToString();
+
+    // ================= SYSTEM =================
+    nameDeviceInput.text = device.deviceName;
+}
+
     void OnModeChanged(int value)
     {
         device.SetMode(value);
@@ -605,69 +730,53 @@ else
         RefreshNetworkUI();
         RefreshMainUI();
 
-        if (device.mode == WirelessDevice.WirelessMode.Station)
+        if (device.mode == WirelessDevice.WirelessMode.Station){
             StartAutoScan();
+            RefreshWirelessUI();
+        }
         else
             StopAutoScan();
     }
 
-    public void OnManagementIPChanged()
-    {
-        int dropManagementIPIndex = managementIPAddressDropdown.value;
-    if (dropManagementIPIndex == 0)
-    {
-        ipAddressInput.interactable = false;
-        netmaskInput.interactable = false;
-        gatewayInput.interactable = false;
-        primaryDNSInput.interactable = false;
-        secondaryDNSInput.interactable = false;
-    }
-    else
-    {
-        ipAddressInput.interactable = true;
-        netmaskInput.interactable = true;
-        gatewayInput.interactable = true;
-        primaryDNSInput.interactable = true;
-        secondaryDNSInput.interactable = true;
-    }
-    }
-
     public void OnSecurityModeChanged(int dropdownIndex){
         int securityModeIndex = securityDropdown.value;
-    if (securityModeIndex == 0) // Open
+    if (securityModeIndex == 0)
     {   
         WPAAuthDropdownText.gameObject.SetActive(false);
-        passwordText.gameObject.SetActive(false);
+        WPAttk2.gameObject.SetActive(false);
         WPAAuthDropdown.gameObject.SetActive(false);
+        passwordText.gameObject.SetActive(false);
+        Passttk2.gameObject.SetActive(false);
         passwordTMP_InputField.gameObject.SetActive(false);
     }
-    else if (securityModeIndex == 1) // WPA2_AES
+    else if (securityModeIndex == 1)
     {
         WPAAuthDropdownText.gameObject.SetActive(true);
+        WPAttk2.gameObject.SetActive(true);
         WPAAuthDropdown.gameObject.SetActive(true);
     }
     }
 
     public void OnWPAAuthModeChanged(int dropdownIndex){
         int wpaAuthModeIndex = WPAAuthDropdown.value;
-        if (wpaAuthModeIndex == 0) // None
+        if (wpaAuthModeIndex == 0) 
         {
             passwordText.gameObject.SetActive(false);
+            Passttk2.gameObject.SetActive(false);
             passwordTMP_InputField.gameObject.SetActive(false);
         }
         else
         {
             passwordText.gameObject.SetActive(true);
+            Passttk2.gameObject.SetActive(true);
             passwordTMP_InputField.gameObject.SetActive(true);
         }
     }
 
     public void Connect()
 {
-    Debug.Log("=== CONNECT FUNCTION MASUK ===");
     if (scanned.Count == 0)
     {
-        Debug.Log("❌ Tidak ada AP");
         return;
     }
 
@@ -675,24 +784,12 @@ else
 
     if (index < 0 || index >= scanned.Count)
     {
-        Debug.Log("❌ Index invalid");
         return;
     }
 
     var ap = scanned[index];
 
-    Debug.Log("Mencoba connect ke: " + ap.ssid);
-
-    device.Connect(ap, stationPasswordInput.text);
-
-    if (device.connectedAP != null)
-    {
-        Debug.Log("✅ CONNECT BERHASIL");
-    }
-    else
-    {
-        Debug.Log("❌ CONNECT GAGAL");
-    }
+    device.Connect(ap, passwordTMP_InputField.text);
 
     RefreshWirelessUI();
     RefreshMainUI();
@@ -760,8 +857,7 @@ else
         }
         RefreshWirelessUI();
         RefreshMainUI();
-        Connect(); // Coba connect ulang setelah setting diubah
-        Debug.Log("Wireless settings updated");
+        Connect();
     }
 
     public void changeNetwork()

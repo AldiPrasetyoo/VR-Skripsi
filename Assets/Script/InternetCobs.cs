@@ -15,15 +15,5 @@ public class InternetCobs : MonoBehaviour
     //           " | End2: " + end2.IsConnected);
 
     bool isActive = end1.IsConnected && end2.IsConnected;
-
-    if (isActive != internetActive)
-    {
-        internetActive = isActive;
-
-        // if (internetActive)
-        //     Debug.Log("🌐 INTERNET AKTIF");
-        // else
-        //     Debug.Log("❌ INTERNET TERPUTUS");
-    }
 }
 }

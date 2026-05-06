@@ -121,14 +121,14 @@ namespace HPhysic
         }
 
         [Button("Add Segment")]
-        private void AddSegment()
+        public void AddSegment()
         {
             numberOfSegments++;
             BuildTower();
         }
 
         [Button("Remove Segment")]
-        private void RemoveSegment()
+        public void RemoveSegment()
         {
             if (numberOfSegments <= 1)
             {

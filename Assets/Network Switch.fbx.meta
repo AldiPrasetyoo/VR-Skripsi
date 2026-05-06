@@ -1,0 +1,610 @@
+fileFormatVersion: 2
+guid: 4b0188084aa15ae4b9a75393a120de78
+ModelImporter:
+  serializedVersion: 24200
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: case
+    second: {fileID: 2100000, guid: 8028fba4860b2bc44ad19cbfc5b63c46, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ethercopper
+    second: {fileID: 2100000, guid: 091efc2e358136147915c4fc529eb110, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: etherouter
+    second: {fileID: 2100000, guid: 2fdf6bf164d339840b37da75e7c482e3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: etherouterinput
+    second: {fileID: 2100000, guid: c46add696744a444c883e22a38075e17, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: frontplate
+    second: {fileID: 2100000, guid: 40c02e61d18c14f469099c16136e38e5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: logo
+    second: {fileID: 2100000, guid: 862a7360f6f571c4ba916dd4e1a9dad7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: plugpins
+    second: {fileID: 2100000, guid: d65268b21b15a1b4db9e7766b884dbc9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: plugplastic
+    second: {fileID: 2100000, guid: 1c9b5e101e732cb43a602a2e46cebfc3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port0green
+    second: {fileID: 2100000, guid: da6e3d2f33e2333479850ee51e3fd852, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port0red
+    second: {fileID: 2100000, guid: 6cb6ab91d334136438c1eb8bcddd62e1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port1green
+    second: {fileID: 2100000, guid: daa5143d0cb5f3e4092a8c6902ffe23e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port1red
+    second: {fileID: 2100000, guid: 4ef273babe8f68249bf39e631573599f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port2green
+    second: {fileID: 2100000, guid: cb155e86ecaf88641af16fa45d49d98c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port2red
+    second: {fileID: 2100000, guid: 14b11cbdd1de8fa4d80706dd39ca40c7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port3green
+    second: {fileID: 2100000, guid: 0c808bc787d8cd24db41ea7d30dd8eca, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port3red
+    second: {fileID: 2100000, guid: 44adf3d6a0d261d4e81e5af25a5afd6e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port4green
+    second: {fileID: 2100000, guid: 4825a260dc511cd42946d83f92bddee2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port4red
+    second: {fileID: 2100000, guid: 601fcf8de91e5e34fb18d63bc550448e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port5green
+    second: {fileID: 2100000, guid: 6d34d7e7101db374a803fff2fd2d9274, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port5red
+    second: {fileID: 2100000, guid: e0d237854d7cc7042bde5171585f979f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port6green
+    second: {fileID: 2100000, guid: 77436217d7854c24e9f8d7c32959687f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port6red
+    second: {fileID: 2100000, guid: 56a73461d6abe6348852edb320df6bd5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port7green
+    second: {fileID: 2100000, guid: 6b27d0ba6ad2afd4e93accd85a77e91e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port7red
+    second: {fileID: 2100000, guid: f9fd8a47483ee6c4b9dccf0004eef12b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port8green
+    second: {fileID: 2100000, guid: fdb0987018f6ead4ea80cb70139c0203, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: port8red
+    second: {fileID: 2100000, guid: efc27503b96f03140a02f3edb18bb4fd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: screen
+    second: {fileID: 2100000, guid: 83080da0bb6f1c24d8cbcd46eeaed1ae, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: screenback
+    second: {fileID: 2100000, guid: 710a54b0812fdf14492cfe87687a2e1a, type: 2}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: case_baseColor
+    second: {fileID: 2800000, guid: 4696eb34ad42dd34a8fcb0ff8bf38f05, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: case_normal
+    second: {fileID: 2800000, guid: 8c2d289f8177a53449ee7a93a0dc5eda, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: ethercopper_baseColor
+    second: {fileID: 2800000, guid: 25eb45e85a03e4944a075b3ac18735a9, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: ethercopper_normal
+    second: {fileID: 2800000, guid: 7e4fb973c21dfd6468e9720e9d3c15c8, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: etherouter_baseColor
+    second: {fileID: 2800000, guid: c962d7807861e344db9a8aeff403b3e3, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: etherouter_normal
+    second: {fileID: 2800000, guid: 675836b6a1ac6a14085603c6bae52b25, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: frontplate_baseColor
+    second: {fileID: 2800000, guid: c9d6a89a21238d24f8f62331ee5f68a2, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: frontplate_normal
+    second: {fileID: 2800000, guid: 2e5d7a2dcf929774ab4abfadc6e5b9d3, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: logo_baseColor
+    second: {fileID: 2800000, guid: fdca490412c76914fb03217b78e05c5b, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: logo_emissive
+    second: {fileID: 2800000, guid: d0fe3ec83405d0f48b519950c0a835c2, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: logo_normal
+    second: {fileID: 2800000, guid: 6aaec65e11cecae4a895091d36c2ed12, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: plugpins_baseColor
+    second: {fileID: 2800000, guid: bf37c510ff0ac4c45be57ee6a28e5e26, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: plugpins_normal
+    second: {fileID: 2800000, guid: 0ef661e02ac8505458cac131af5d4227, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: plugplastic_baseColor
+    second: {fileID: 2800000, guid: 31e0be324c06f4946af260d027db781d, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: plugplastic_normal
+    second: {fileID: 2800000, guid: a6e9d9ac01769e94a83b50f056431e20, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port0green_baseColor
+    second: {fileID: 2800000, guid: 9c2fc6fdf5421384bb797da28196cb1f, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port0green_emissive
+    second: {fileID: 2800000, guid: 4669d0b4aae495544880222982a5cc3b, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port0green_normal
+    second: {fileID: 2800000, guid: 7eb969269ced8504cab77ae54f94a0a2, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port0red_baseColor
+    second: {fileID: 2800000, guid: e5802481668b4924b92ba6052e4e764a, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port0red_emissive
+    second: {fileID: 2800000, guid: 559ecbd01d0b735469b52c8c6f710f04, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port0red_normal
+    second: {fileID: 2800000, guid: fcab5a9a8e813ae4aa04d3c5bb488a57, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port1green_baseColor
+    second: {fileID: 2800000, guid: 3e7e5a44200991445869500d237bd8e3, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port1green_emissive
+    second: {fileID: 2800000, guid: 06d432f1fa3e4454897b1a89cea9ca76, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port1green_normal
+    second: {fileID: 2800000, guid: 00d69b5a32ba0e6429b04d6455d2c187, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port1red_baseColor
+    second: {fileID: 2800000, guid: fcabaec86d77ef340a19bc29dbc42248, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port1red_emissive
+    second: {fileID: 2800000, guid: 72eb0af8ed0cbca4aa0c7cd3b2e73de8, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port1red_normal
+    second: {fileID: 2800000, guid: 07a312b594f55b244beb8771c3cc0389, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port2green_baseColor
+    second: {fileID: 2800000, guid: 46a0f6457929eb64f8d316cc9e883d54, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port2green_emissive
+    second: {fileID: 2800000, guid: e5c41d05e90fe3d48adea108a2d9394d, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port2green_normal
+    second: {fileID: 2800000, guid: 3dba8b0ac8bebba4481028f60d7d78d2, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port2red_baseColor
+    second: {fileID: 2800000, guid: 98cd535922e32904c9b006cdaf09ab1c, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port2red_emissive
+    second: {fileID: 2800000, guid: cad877ab035c6c34e85c7d5fc5ed4597, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port2red_normal
+    second: {fileID: 2800000, guid: 9084dab5434a70a4cab2c9e28a9882fc, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port3green_baseColor
+    second: {fileID: 2800000, guid: 5aa75a3542dbdb64685fc9cb38fa00af, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port3green_emissive
+    second: {fileID: 2800000, guid: b9e0e70ecbe0c0e4db3a97e48955fe6e, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port3green_normal
+    second: {fileID: 2800000, guid: ca1cfcc22b5bec0479adbc25bdd9e156, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port3red_baseColor
+    second: {fileID: 2800000, guid: 5bdae47a4d1b35b4d9aa23c95db64fb0, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port3red_emissive
+    second: {fileID: 2800000, guid: e1e7a0902b0d76e45870e241f3270d6c, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port3red_normal
+    second: {fileID: 2800000, guid: 74335003f51433b4380c951d48339a12, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port4green_baseColor
+    second: {fileID: 2800000, guid: 5a5588dc2788633469fc28f08dd7bde8, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port4green_emissive
+    second: {fileID: 2800000, guid: 17846d8d594c6e04785bc4046b70a7b3, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port4green_normal
+    second: {fileID: 2800000, guid: 6c31ca8167f46354c9e856e02a7698b9, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port4red_baseColor
+    second: {fileID: 2800000, guid: 3ba6efee36765d54eb101e295daaba5d, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port4red_emissive
+    second: {fileID: 2800000, guid: 31fdfc6f88c206c4aae49345fb80d62e, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port4red_normal
+    second: {fileID: 2800000, guid: 606355756e0cc4f4a8d6dfc85aa06836, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port5green_baseColor
+    second: {fileID: 2800000, guid: aa081181e859d774db6f7beb0e76fd38, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port5green_emissive
+    second: {fileID: 2800000, guid: bf9cee84f7818654ba9e0743e3ca4488, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port5green_normal
+    second: {fileID: 2800000, guid: acf7c5cd4268781419ec4ba25c95a0ad, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port5red_baseColor
+    second: {fileID: 2800000, guid: 04c9c8d9c0309ec4bba7b42a7b29340f, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port5red_emissive
+    second: {fileID: 2800000, guid: ae8b31523398c584c9877b4ddcae3ddf, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port5red_normal
+    second: {fileID: 2800000, guid: fed070ee5f8df4c4aabe4946649e8969, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port6green_baseColor
+    second: {fileID: 2800000, guid: 1f2999508877032408b5d53850e6c415, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port6green_emissive
+    second: {fileID: 2800000, guid: 65c29bb5602081844976775bd92db933, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port6green_normal
+    second: {fileID: 2800000, guid: d0eb8cae56e163d49b515c798c2b5da6, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port6red_baseColor
+    second: {fileID: 2800000, guid: 3c24e2db59db3f5458f6a4c5f0a02ec3, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port6red_emissive
+    second: {fileID: 2800000, guid: 5a74ed6621370df48aae396318254117, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port6red_normal
+    second: {fileID: 2800000, guid: 0db13b6d0cc8e5144bfb5078b701aea9, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port7green_baseColor
+    second: {fileID: 2800000, guid: f1fc2d7e9e990b144910d4da38bd767b, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port7green_emissive
+    second: {fileID: 2800000, guid: 3e494deb58ef5274faff9238c6f90930, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port7green_normal
+    second: {fileID: 2800000, guid: 72d7c62afdad50c40b06385690b13fdc, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port7red_baseColor
+    second: {fileID: 2800000, guid: 98be8cb5975321747895418631f5b512, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port7red_emissive
+    second: {fileID: 2800000, guid: b29203612af564841bfff202c85e7c9c, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port7red_normal
+    second: {fileID: 2800000, guid: e6289b2d061c41942a325ce52c04fe59, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port8green_baseColor
+    second: {fileID: 2800000, guid: a04c030db41e98b499b236d328851c53, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port8green_emissive
+    second: {fileID: 2800000, guid: 48366fa58dbcdcd41ab1790fa970bb47, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port8green_normal
+    second: {fileID: 2800000, guid: 27bc8a52c12bfa34e9998400ca9c2f2f, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port8red_baseColor
+    second: {fileID: 2800000, guid: ed397bb3f96763344a3a112476ed8daa, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port8red_emissive
+    second: {fileID: 2800000, guid: a0a1c44826ac8f2409b5edbacda8470f, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: port8red_normal
+    second: {fileID: 2800000, guid: c7a850fd20fee9d46b82c48df762abc9, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: screen_baseColor
+    second: {fileID: 2800000, guid: 71682d3a47d0cfe47878ec9548d33321, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: screen_normal
+    second: {fileID: 2800000, guid: 0bc926e82931faf48a39fb5b7f48a8c8, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: screenback_baseColor
+    second: {fileID: 2800000, guid: 941be464b60540849ae51e0e7a4e69c9, type: 3}
+  materials:
+    materialImportMode: 1
+    materialName: 2
+    materialSearch: 2
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 0
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 1
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -5,6 +5,9 @@ using System.Collections.Generic;
 [RequireComponent(typeof(NetworkDevice))]
 public class WirelessDevice : MonoBehaviour
 {
+    [Header("Obstacle Settings")]
+    public LayerMask obstacleLayer;
+
     // ================= ENUM =================
     public enum WirelessMode { Station, AccessPoint }
     public enum IEEE80211Mode { AN_MIXED }
@@ -267,6 +270,33 @@ public class WirelessDevice : MonoBehaviour
             NetworksRegistry.RegisterAP(this);
     }
 
+    float GetObstacleLoss(WirelessDevice ap)
+    {
+        Vector3 dir = (ap.transform.position - transform.position);
+        float distance = dir.magnitude;
+
+        Ray ray = new Ray(transform.position, dir.normalized);
+
+        RaycastHit[] hits = Physics.RaycastAll(ray, distance, obstacleLayer);
+
+        float totalLoss = 0f;
+
+        foreach (var hit in hits)
+        {
+            ObstacleMaterial obstacle = hit.collider.GetComponent<ObstacleMaterial>();
+
+            if (obstacle != null)
+            {
+                float loss = obstacle.GetLoss();
+                totalLoss += loss;
+
+                Debug.Log($"🧱 {hit.collider.name} | {obstacle.materialType} | Loss: {loss} dB");
+            }
+        }
+
+        return totalLoss;
+    }
+
     public void Connect(WirelessDevice ap, string inputPassword)
     {
         if (!hasPower)
@@ -322,7 +352,6 @@ public class WirelessDevice : MonoBehaviour
         if (lastInternetState != state)
         {
             lastInternetState = state;
-            networkDevice.isInternetSource = state;
 
             if (state && connectedAP != null)
                 Debug.Log($"🟢 {deviceName} GOT INTERNET via {connectedAP.deviceName} (Wireless Bridge Active)");
@@ -381,8 +410,11 @@ public class WirelessDevice : MonoBehaviour
         float distance = Vector3.Distance(transform.position, ap.transform.position);
         if (distance < 0.1f) distance = 0.1f;
 
+        float distanceKM = distance / 1000f;
+
+
         float fspl =
-            20f * Mathf.Log10(distance) +
+            20f * Mathf.Log10(distanceKM) +
             20f * Mathf.Log10(frequency) -
             27.55f;
 
@@ -391,13 +423,16 @@ public class WirelessDevice : MonoBehaviour
 
         float interference = GetChannelInterference(ap);
 
+        float obstacleLoss = GetObstacleLoss(ap);
+
         float receivedPower =
             ap.GetEIRP()
             + antennaGain
             - fspl
             - txLoss
             - rxLoss
-            - interference;
+            - interference
+            - obstacleLoss;
 
         return receivedPower;
     }

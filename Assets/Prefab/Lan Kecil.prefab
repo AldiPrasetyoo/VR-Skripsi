@@ -2322,7 +2322,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a73ca4efb287e142b4032b0fac4fb79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numberOfPoints: 1
+  numberOfPoints: 5
   space: 0.2
   size: 0.044
   springForce: 200
@@ -2331,9 +2331,9 @@ MonoBehaviour:
   autoExpandThreshold: 0.5
   autoShrinkThreshold: 0.3
   autoDelay: 0.1
-  maxPoints: 20
-  minPoints: 1
-  defaultPoints: 1
+  maxPoints: 50
+  minPoints: 5
+  defaultPoints: 5
   shrinkInterval: 0.05
   start: {fileID: 162902154969405948}
   end: {fileID: 2532937707774075398}

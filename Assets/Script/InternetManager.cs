@@ -70,40 +70,66 @@ public class InternetManager : MonoBehaviour
     }
 
     void SpreadInternet(NetworkDevice start)
+{
+    Queue<NetworkDevice> queue = new();
+    HashSet<NetworkDevice> visited = new();
+
+    queue.Enqueue(start);
+    visited.Add(start);
+
+    while (queue.Count > 0)
     {
-        Queue<NetworkDevice> queue = new();
-        HashSet<NetworkDevice> visited = new();
+        var current = queue.Dequeue();
 
-        queue.Enqueue(start);
-        visited.Add(start);
+        if (current.requirePowerToWork && !current.hasPower)
+            continue;
 
-        while (queue.Count > 0)
+        current.SetInternet(true);
+
+        // ================= LAN =================
+        NetworkPort[] ports = current.GetComponentsInChildren<NetworkPort>();
+
+        foreach (var p in ports)
         {
-            var current = queue.Dequeue();
-
-            // JIKA DEVICE INI BUTUH LISTRIK TAPI SEDANG MATI, HENTIKAN INTERNET DI SINI
-            if (current.requirePowerToWork && !current.hasPower)
+            if (p.ConnectedPort != null)
             {
-                continue; 
+                var next = p.ConnectedPort.ParentDevice;
+
+                if (next != null && !visited.Contains(next))
+                {
+                    visited.Add(next);
+                    queue.Enqueue(next);
+                }
+            }
+        }
+
+        // ================= WIRELESS =================
+        WirelessDevice wireless = current.GetComponent<WirelessDevice>();
+
+        if (wireless != null)
+        {
+            // Kalau AP → kasih ke semua client
+            foreach (var client in wireless.connectedClients)
+            {
+                if (client != null && !visited.Contains(client.networkDevice))
+                {
+                    visited.Add(client.networkDevice);
+                    queue.Enqueue(client.networkDevice);
+                }
             }
 
-            current.SetInternet(true);
-
-            NetworkPort[] ports = current.GetComponentsInChildren<NetworkPort>();
-
-            foreach (var p in ports)
+            // Kalau Station → ambil dari AP
+            if (wireless.connectedAP != null)
             {
-                if (p.ConnectedPort != null)
-                {
-                    var next = p.ConnectedPort.ParentDevice;
+                var apDevice = wireless.connectedAP.networkDevice;
 
-                    if (next != null && !visited.Contains(next))
-                    {
-                        visited.Add(next);
-                        queue.Enqueue(next);
-                    }
+                if (apDevice != null && !visited.Contains(apDevice))
+                {
+                    visited.Add(apDevice);
+                    queue.Enqueue(apDevice);
                 }
             }
         }
     }
+}   
 }

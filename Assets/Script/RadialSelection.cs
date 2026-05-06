@@ -41,6 +41,7 @@ namespace HPhysic
             [Header("Prefab (fallback)")]
             public GameObject prefab;
             public Transform scaleReference;
+            public Transform rotationReference;
 
             [Header("Optional Component Copy")]
             public GameObject componentReference;
