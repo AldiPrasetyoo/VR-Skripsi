@@ -9,7 +9,7 @@ public class WirelessDevice : MonoBehaviour
     public LayerMask obstacleLayer;
 
     // ================= ENUM =================
-    public enum WirelessMode { Station, AccessPoint }
+    public enum WirelessMode { None, Station, AccessPoint }
     public enum IEEE80211Mode { AN_MIXED }
     public enum ChannelWidth { Auto, CW20Mhz, CW40Mhz }
     public enum ChannelShift { None }

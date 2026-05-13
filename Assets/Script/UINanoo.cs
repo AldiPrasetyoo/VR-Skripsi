@@ -349,6 +349,9 @@ IEnumerator ScanLoop()
 
     public void Logout()
     {
+
+    device = null;
+
     mainUI.SetActive(false);
     navbarPanel.SetActive(false);
     loginPanel.SetActive(false);
@@ -357,6 +360,8 @@ IEnumerator ScanLoop()
     usernameInput.text = "";
     passwordInput.text = "";
     agreeToggle.isOn = false;
+
+    StartScanLoop();
 
     }
     
@@ -458,7 +463,7 @@ IEnumerator ScanLoop()
         if (device.mode == WirelessDevice.WirelessMode.AccessPoint)
         {
             APMacText.text = device.GetAPMacAddress();
-            connectionText.text = device.GetConnectedStationsCount() + " Station(s) Connected";
+            connectionText.text = device.GetConnectedStationsCount() + " Station(s)";
         }
         else
         {

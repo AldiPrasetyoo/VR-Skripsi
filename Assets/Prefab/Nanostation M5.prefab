@@ -574,6 +574,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b400c592cea6127468cee2189fca2537, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WirelessDevice
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 64
   mode: 0
   deviceIcon: {fileID: 396294556, guid: 575600c6b7b81ae4cba4358333fa5e0f, type: 3}
   networkDevice: {fileID: 0}
