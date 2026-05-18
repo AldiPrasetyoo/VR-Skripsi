@@ -688,7 +688,7 @@
                     "name": "Select",
                     "type": "Button",
                     "id": "33754c03-48ec-46ef-9bc6-22ed6bfdd8e8",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -779,6 +779,42 @@
                     "type": "Value",
                     "id": "2257500c-1efb-4f69-a54d-ed5db2708616",
                     "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Primary",
+                    "type": "Button",
+                    "id": "9284ca9f-74ac-4257-9c9e-d458db08a78a",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Primary Value",
+                    "type": "Value",
+                    "id": "218f2b23-53ab-49de-b2ac-bb118cc772cd",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Secondary",
+                    "type": "Button",
+                    "id": "0ebb090f-0ea5-4766-872a-294810e6b196",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Secondary Value",
+                    "type": "Value",
+                    "id": "d59ba2d3-cf9f-4a87-b956-407c1be0d239",
+                    "expectedControlType": "Axis",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
@@ -947,6 +983,61 @@
                     "processors": "ScaleVector2(x=0),StickDeadzone",
                     "groups": "Generic XR Controller",
                     "action": "Scale Delta",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "1f207a80-fc59-453a-a917-9686c27bbace",
+                    "path": "<XRController>{LeftHand}/{PrimaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Generic XR Controller",
+                    "action": "Primary",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f4181099-45df-435d-88d2-7d9bf6aeffb4",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Generic XR Controller",
+                    "action": "Primary",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "57c68099-0db9-446c-b6c3-7ad5214c6b1e",
+                    "path": "<XRController>{LeftHand}/{PrimaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Generic XR Controller",
+                    "action": "Primary Value",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "36193b9c-83fe-4e9b-a046-7c41e0bbcd95",
+                    "path": "<XRController>{LeftHand}/{SecondaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Secondary",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5b3e502f-834c-46cd-9275-71dfecaf9e81",
+                    "path": "<XRController>{LeftHand}/{SecondaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Secondary Value",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -1580,13 +1671,40 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Primary Button",
+                    "name": "Primary",
                     "type": "Button",
                     "id": "ecfcdf1f-73d2-44b0-b2ce-2f51d5e60b7e",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Primary Value",
+                    "type": "Value",
+                    "id": "38ae7429-cac3-4dfb-98d2-8bfeff693856",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Secondary",
+                    "type": "Button",
+                    "id": "5fcb9a5d-b68e-4c16-9163-d37f27519803",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Secondary Value",
+                    "type": "Value",
+                    "id": "b74e4ad4-0905-4c13-9491-53e3b1c417bf",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -1762,7 +1880,40 @@
                     "interactions": "",
                     "processors": "",
                     "groups": ";Generic XR Controller",
-                    "action": "Primary Button",
+                    "action": "Primary",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "74e580bf-cc67-42aa-adf7-2b7899032b4c",
+                    "path": "<XRController>{RightHand}/{PrimaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Primary Value",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ed9c71cb-ee1f-4f41-b6f4-16031b0ee302",
+                    "path": "<XRController>{RightHand}/{SecondaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Secondary",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a9d9ac8f-e440-4da9-8da9-a61d27ae157d",
+                    "path": "<XRController>{RightHand}/{SecondaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Secondary Value",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

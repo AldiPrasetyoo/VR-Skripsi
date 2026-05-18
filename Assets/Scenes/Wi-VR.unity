@@ -6916,6 +6916,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   occupied: 0
+  nomorSlot: 2
   ghostPoint: {fileID: 0}
 --- !u!65 &181137608
 BoxCollider:
@@ -7361,6 +7362,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   occupied: 0
+  nomorSlot: 2
   ghostPoint: {fileID: 0}
 --- !u!65 &196288905
 BoxCollider:
@@ -15019,6 +15021,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   occupied: 0
+  nomorSlot: 2
   ghostPoint: {fileID: 0}
 --- !u!65 &520118985
 BoxCollider:
@@ -16469,6 +16472,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   occupied: 0
+  nomorSlot: 2
   ghostPoint: {fileID: 0}
 --- !u!65 &590206358
 BoxCollider:
@@ -18201,6 +18205,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   occupied: 0
+  nomorSlot: 2
   ghostPoint: {fileID: 0}
 --- !u!65 &680745768
 BoxCollider:
@@ -21759,6 +21764,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   occupied: 0
+  nomorSlot: 2
   ghostPoint: {fileID: 0}
 --- !u!65 &811259735
 BoxCollider:
@@ -25979,6 +25985,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   occupied: 0
+  nomorSlot: 2
   ghostPoint: {fileID: 0}
 --- !u!65 &961512838
 BoxCollider:
@@ -32564,6 +32571,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   occupied: 0
+  nomorSlot: 2
   ghostPoint: {fileID: 0}
 --- !u!65 &1238753753
 BoxCollider:
@@ -36973,6 +36981,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   occupied: 0
+  nomorSlot: 2
   ghostPoint: {fileID: 0}
 --- !u!65 &1387605384
 BoxCollider:
@@ -39683,6 +39692,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   occupied: 0
+  nomorSlot: 2
   ghostPoint: {fileID: 0}
 --- !u!65 &1503696110
 BoxCollider:
@@ -41800,6 +41810,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   occupied: 0
+  nomorSlot: 2
   ghostPoint: {fileID: 0}
 --- !u!65 &1620398627
 BoxCollider:
@@ -46206,6 +46217,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   occupied: 0
+  nomorSlot: 2
   ghostPoint: {fileID: 0}
 --- !u!65 &1795338831
 BoxCollider:
@@ -55043,6 +55055,10 @@ PrefabInstance:
       propertyPath: device
       value: 
       objectReference: {fileID: 8164510639221015502}
+    - target: {fileID: 3728050739003195263, guid: 374d7c14af6184441bb8e32e0b0ce7d9, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

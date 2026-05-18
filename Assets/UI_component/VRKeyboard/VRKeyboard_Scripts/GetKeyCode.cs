@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 public class GetKeyCode : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler
 {
@@ -15,7 +16,8 @@ public class GetKeyCode : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     private string buttonString;                    // key string
     private Text showString;                        // key string (show)
 
-    private InputField inputTarget;                 // the key will input to this input field
+    // private InputField inputTarget;                 // the key will input to this input field
+    private TMP_InputField inputTarget;
 
     private bool toLowLetterCase;                   // save the statement of keyboard letters
     private readonly CultureInfo cult = new CultureInfo("en-US", false);
@@ -43,11 +45,11 @@ public class GetKeyCode : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         toLowLetterCase = LetterCaseDetection.Lowercase;
         
         // determine the button string is english or not
-        if (Regex.IsMatch(buttonString, "^[a-zA-Z0-9]*$") && 
-            !(string.Equals(buttonString, "delete") || string.Equals(buttonString, "clear") || 
-              string.Equals(buttonString, "backward") || string.Equals(buttonString, "forward") ||
-              string.Equals(buttonString, "Letter case") || string.Equals(buttonString, "To0") ||
-              string.Equals(buttonString, "ToLast")))
+        if (!(string.Equals(buttonString, "delete") || string.Equals(buttonString, "clear") || 
+            string.Equals(buttonString, "backward") || string.Equals(buttonString, "forward") ||
+            string.Equals(buttonString, "Letter case") || string.Equals(buttonString, "To0") ||
+            string.Equals(buttonString, "ToLast") || string.Equals(buttonString, "space") ||
+            string.Equals(buttonString, "done")))
         {
             buttonString = toLowLetterCase ? buttonString.ToLower(cult) : buttonString.ToUpper(cult);
             showString.text = buttonString;
@@ -84,14 +86,14 @@ public class GetKeyCode : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         int index = GetInputFieldTarget.Index;
         
         if(inputTarget == null)
-            inputTarget = GameObject.Find(GetInputFieldTarget.SelectInputFieldName).GetComponent<InputField>();
+            inputTarget = GameObject.Find(GetInputFieldTarget.SelectInputFieldName).GetComponent<TMP_InputField>();
         
         if (inputTarget.gameObject.name != target)
         {
 #if(UNITY_EDITOR)
             print("change target");
 #endif
-            inputTarget = GameObject.Find(target).GetComponent<InputField>();
+            inputTarget = GameObject.Find(target).GetComponent<TMP_InputField>();
         }
         
 #if(UNITY_EDITOR)
@@ -102,9 +104,10 @@ public class GetKeyCode : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         
         string targetText = inputTarget.text;
         if (!(string.Equals(buttonString, "delete") || string.Equals(buttonString, "clear") || 
-            string.Equals(buttonString, "backward") || string.Equals(buttonString, "forward") ||
-            string.Equals(buttonString, "Letter case") || string.Equals(buttonString, "To0") ||
-            string.Equals(buttonString, "ToLast")))
+        string.Equals(buttonString, "backward") || string.Equals(buttonString, "forward") ||
+        string.Equals(buttonString, "Letter case") || string.Equals(buttonString, "To0") ||
+        string.Equals(buttonString, "ToLast") || string.Equals(buttonString, "space") ||
+        string.Equals(buttonString, "done")))
         {
             inputTarget.text = targetText.Insert(index, buttonString);
 #if(UNITY_EDITOR)
@@ -116,6 +119,17 @@ public class GetKeyCode : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         {
             switch (buttonString)
             {
+
+                case "space":
+                    inputTarget.text = targetText.Insert(GetInputFieldTarget.Index, " ");
+                    GetInputFieldTarget.Index++;
+                    break;
+
+                case "done":
+                    inputTarget.DeactivateInputField();
+                    keyboardController.gameObject.SetActive(false);
+                    break;
+
                 case "delete":
                     if (GetInputFieldTarget.Index > 0)
                     {

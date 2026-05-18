@@ -12,10 +12,11 @@ EditorBuildSettings:
     path: Assets/Scenes/MainMenu.unity
     guid: 7254b3959bdbd7943b359897daec392c
   - enabled: 1
-    path: Assets/Scenes/Pointing FIX.unity
+    path: Assets/Scenes/Fase 3 (Pointing).unity
     guid: 2d83e6a00ea15174f93a6d834d208f94
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: cdaa5f2a093c8ba4a84af5d2f9cd89a1, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 61b2f9ba434ca3c4da68c311481c7a5c, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 9680c3118ff2ef04a80d5ba7f2a8172c, type: 2}
+  m_UseUCBPForAssetBundles: 0

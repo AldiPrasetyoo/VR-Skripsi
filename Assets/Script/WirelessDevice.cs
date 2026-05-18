@@ -1,5 +1,5 @@
 using UnityEngine;
-using HPhysic;
+using HPhysic; // Pastikan namespace ini ada di proyek Anda
 using System.Collections.Generic;
 
 [RequireComponent(typeof(NetworkDevice))]
@@ -21,50 +21,57 @@ public class WirelessDevice : MonoBehaviour
     public enum NetworkMode { Bridge }
 
     // ================= MODE =================
+    [Header("Mode Configuration")]
     public WirelessMode mode = WirelessMode.Station;
-
     public Sprite deviceIcon;
 
     [HideInInspector] public NetworkDevice networkDevice;
     private bool lastInternetState = false;
 
     // ================= GENERAL =================
+    [Header("General Info")]
     public string deviceName;
     public bool isConnected;
 
     public WirelessDevice connectedAP;
     public List<WirelessDevice> connectedClients = new List<WirelessDevice>();
 
-    public string ipAddress = "0.0.0.0";
-    public string gateway = "0.0.0.0";
+    public string ipAddress = "192.168.1.20"; // Nilai default default radio pabrikan (bukan 0.0.0.0)
+    public string gateway = "192.168.1.1";
 
     // 🔥 MAC ADDRESS
+    [Header("Hardware Addresses")]
     public string wlan0Mac;
     public string lan0Mac;
     public string lan1Mac;
 
     // ================= NETWORK =================
-    public NetworkMode networkMode;
+    [Header("Network Settings")]
+    public NetworkMode networkMode = NetworkMode.Bridge;
     public bool disableNetwork;
 
     public string netmask = "0.0.0.0";
-    public string primaryDNS = "0.0.0.0";
-    public string secondaryDNS = "0.0.0.0";
+    public string primaryDNS = "8.8.8.8";
+    public string secondaryDNS = "8.8.4.4";
     public int mtu = 1500;
 
     // ================= POWER =================
+    [Header("Status Variables")]
     public bool hasPower;
 
     // ================= RADIO =================
-    public float outputPower = 10f;
+    [Header("Radio Settings")]
+    [Range(0f, 27f)] public float outputPower = 10f;
     public float antennaGain = 16f;
-    public float frequency = 2400f;
+    [Tooltip("Gunakan MHz untuk perhitungan FSPL standar (misal 2412, 5180)")]
+    public float frequency = 2412f; 
     public float beamWidth = 60f;
 
-    public ChannelWidth channelWidth;
+    public ChannelWidth channelWidth = ChannelWidth.CW20Mhz;
     public ChannelShift channelShift;
 
-    public float currentSignal;
+    [Header("Realtime Diagnostics")]
+    public float currentSignal = -120f;
     public float currentEIRP;
 
     // ================= SIGNAL =================
@@ -80,26 +87,29 @@ public class WirelessDevice : MonoBehaviour
     public float packetLoss;
 
     // ================= AIRMAX =================
+    [Header("AirMax Status")]
     public float airMaxQuality = 100f;
     public float airMaxCapacity = 100f;
 
     // ================= LAN =================
+    [Header("LAN Status")]
     public string lan0Status = "Unplugged";
     public string lan1Status = "Unplugged";
 
     // ================= WIRELESS =================
-    public string ssid = "";
+    [Header("Wireless Security")]
+    public string ssid = "AIRNET-AP";
     public string password = "";
 
-    public bool WDS;
-    public string countryCode;
+    public bool WDS = true;
+    public string countryCode = "Indonesia";
 
     public IEEE80211Mode ieee80211Mode;
     public ExtensionChannel extensionChannel;
-    public int channel = 5;
+    public int channel = 1;
 
     public bool freqScan;
-    public bool calculateEIRP;
+    public bool calculateEIRP = true;
     public bool autoEIRP;
 
     public DataRateModule dataRateModule;
@@ -110,63 +120,33 @@ public class WirelessDevice : MonoBehaviour
     public WPAAuthMode wpaAuthMode;
 
     // ================= STATION =================
+    [Header("Station Settings")]
     public string lockToAPSSID;
 
     // ================= CONST =================
-    const float DisconnectThreshold = -90f;
-    const float MaxEIRP_Indonesia = 36f;
+    private const float DisconnectThreshold = -90f;
+    private const float MaxEIRP_Indonesia = 36f;
 
-    // ================= Kabel =================
-
-    [Header("PORT REFERENCES")]
+    // ================= KABEL =================
+    [Header("Port References")]
     public Connector lan0Connector;
     public Connector lan1Connector;
 
-    // ================= UNITY =================
+    // ================= UNITY METHODS =================
     void Awake()
     {
         networkDevice = GetComponent<NetworkDevice>();
 
-        deviceName = gameObject.name;
+        if (string.IsNullOrEmpty(deviceName))
+            deviceName = gameObject.name;
 
+        // Generate MAC Addresses unik saat perangkat dibuat
         string baseMac = GenerateMacAddress();
         wlan0Mac = baseMac;
-        lan0Mac = IncrementMac(baseMac, 5);
-        lan1Mac = IncrementMac(baseMac, 6);
+        lan0Mac = IncrementMac(baseMac, 1);
+        lan1Mac = IncrementMac(baseMac, 2);
     }
 
-    public void SetDeviceName(string newName)
-    {
-        deviceName = newName;
-        gameObject.name = newName;
-    }
-
-    string IncrementMac(string mac, int increment)
-    {
-        string[] parts = mac.Split(':');
-        int lastByte = System.Convert.ToInt32(parts[5], 16);
-        lastByte = (lastByte + increment) % 256;
-        parts[5] = lastByte.ToString("X2");
-        return string.Join(":", parts);
-    }
-
-    string GenerateMacAddress()
-    {
-        byte[] mac = new byte[6];
-
-        mac[0] = 0x04;
-        mac[1] = 0x18;
-        mac[2] = 0xD6;
-
-        System.Random rand = new System.Random();
-        mac[3] = (byte)rand.Next(0, 256);
-        mac[4] = (byte)rand.Next(0, 256);
-        mac[5] = (byte)rand.Next(0, 256);
-
-        return System.BitConverter.ToString(mac).Replace("-", ":");
-    }
-
-    // CATATAN: Pastikan class NetworksRegistry milikmu tidak bermasalah
     void OnEnable()
     {
         if (mode == WirelessMode.AccessPoint)
@@ -176,82 +156,92 @@ public class WirelessDevice : MonoBehaviour
     void OnDisable()
     {
         NetworksRegistry.UnregisterAP(this);
+        Disconnect();
     }
 
     void Update()
     {
         UpdateLANStatus();
         currentEIRP = GetEIRP();
+        hasPower = networkDevice != null && networkDevice.hasPower;
 
-        hasPower = networkDevice.hasPower;
-
+        // JIKA MATI LAMPU / TIDAK ADA DAYA POE
         if (!hasPower)
         {
-            isConnected = false;
-            currentSignal = -120f;
-            txRate = 0; rxRate = 0; transmitCCQ = 0; latency = 0; packetLoss = 100;
-
-            if (mode == WirelessMode.Station)
-                SetStationInternetBridge(false);
-
+            ResetRadioStats();
+            if (mode == WirelessMode.Station && isConnected)
+            {
+                Disconnect();
+            }
             return;
         }
 
-        noiseFloor = -95f + Random.Range(-5f, 5f);
+        // Simulasi fluktuasi fluktuasi ambang batas noise latar belakang
+        noiseFloor = -95f + Random.Range(-1.5f, 1.5f);
 
-        // 2. === ACCESS POINT MODE ===
+        // 1. === ACCESS POINT MODE ===
         if (mode == WirelessMode.AccessPoint)
         {
+            isConnected = true; // AP selalu aktif menyala selama ada daya
             return;
         }
 
-        // 3. === STATION MODE ===
+        // 2. === STATION MODE ===
         if (connectedAP == null)
         {
-            isConnected = false;
+            ResetRadioStats();
             SetStationInternetBridge(false);
             return;
         }
 
+        // Kalkulasi Sinyal Utama
         currentSignal = CalculateSignal(connectedAP);
-        horizontalSignal = currentSignal + Random.Range(-2f, 2f);
-        verticalSignal = currentSignal + Random.Range(-2f, 2f);
+        horizontalSignal = currentSignal + Random.Range(-1f, 1f);
+        verticalSignal = currentSignal + Random.Range(-1f, 1f);
 
-        float signalQuality = Mathf.InverseLerp(-90f, -40f, currentSignal);
+        // Perhitungan Indikator Kualitas Link (CCQ & AirMax)
+        float signalQuality = Mathf.InverseLerp(-90f, -45f, currentSignal);
         float noiseImpact = Mathf.InverseLerp(-100f, -70f, noiseFloor);
         float baseRate = (channelWidth == ChannelWidth.CW40Mhz) ? 300f : 150f;
+        
         float distance = Vector3.Distance(transform.position, connectedAP.transform.position);
-        float distanceFactor = Mathf.Clamp01(1f - (distance / 200f));
+        float distanceFactor = Mathf.Clamp01(1f - (distance / 2500f)); // Jarak maksimal simulasi di-up ke 2.5km
         float qualityFactor = Mathf.Clamp01(signalQuality * distanceFactor * (1f - noiseImpact));
 
         transmitCCQ = qualityFactor * 100f;
+        airMaxQuality = transmitCCQ;
+        airMaxCapacity = qualityFactor * 90f + Random.Range(0f, 10f);
 
+        // Hitung SNR dan Data Rate (Mbps) Realtime
         float snr = currentSignal - noiseFloor;
-        float snrFactor = Mathf.InverseLerp(0f, 40f, snr);
+        float snrFactor = Mathf.InverseLerp(10f, 40f, snr);
 
         txRate = baseRate * snrFactor;
         rxRate = baseRate * snrFactor;
 
-        latency = 1f + (1f - qualityFactor) * 100f + Random.Range(0f, 5f);
+        // Hitung Latensi (Ping) dan Packet Loss
+        latency = 1f + (1f - qualityFactor) * 80f + Random.Range(1f, 4f);
         packetLoss = Mathf.Clamp01(1f - qualityFactor) * 100f;
 
+        // Auto Disconnect jika sinyal drop melewati batas ambang drop (-90 dBm)
         if (currentSignal < DisconnectThreshold)
         {
-            Debug.Log($"🔴 DISCONNECTED (Signal {currentSignal:F1} dBm)");
+            Debug.Log($"🔴 DISCONNECTED: Sinyal terlalu drop ({currentSignal:F1} dBm)");
             Disconnect();
             return;
         }
 
         isConnected = true;
 
-        bool validNetwork = IsSameSubnet(ipAddress, connectedAP.ipAddress, netmask) && gateway == connectedAP.ipAddress;
-        
-        bool apHasInternet = connectedAP.hasPower && connectedAP.networkDevice.hasInternet;
-
+        // Validasi Aliran Data Jaringan (Subnet, Gateway, & Internet AP)
+        bool validNetwork = IsSameSubnet(ipAddress, connectedAP.ipAddress, netmask);
+        bool apHasInternet = connectedAP.networkDevice != null && connectedAP.networkDevice.hasInternet;
         bool internetState = validNetwork && apHasInternet;
 
         SetStationInternetBridge(internetState);
     }
+
+    // ================= LOGIC PERANGKAT =================
 
     void UpdateLANStatus()
     {
@@ -270,57 +260,16 @@ public class WirelessDevice : MonoBehaviour
             NetworksRegistry.RegisterAP(this);
     }
 
-    float GetObstacleLoss(WirelessDevice ap)
-    {
-        Vector3 dir = (ap.transform.position - transform.position);
-        float distance = dir.magnitude;
-
-        Ray ray = new Ray(transform.position, dir.normalized);
-
-        RaycastHit[] hits = Physics.RaycastAll(ray, distance, obstacleLayer);
-
-        float totalLoss = 0f;
-
-        foreach (var hit in hits)
-        {
-            ObstacleMaterial obstacle = hit.collider.GetComponent<ObstacleMaterial>();
-
-            if (obstacle != null)
-            {
-                float loss = obstacle.GetLoss();
-                totalLoss += loss;
-
-                Debug.Log($"🧱 {hit.collider.name} | {obstacle.materialType} | Loss: {loss} dB");
-            }
-        }
-
-        return totalLoss;
-    }
-
     public void Connect(WirelessDevice ap, string inputPassword)
     {
-        if (!hasPower)
-        {
-            Debug.Log("❌ Device tidak punya power (PoE)");
-            return;
-        }
+        if (!hasPower || ap == null || !ap.hasPower) return;
+        if (mode != WirelessMode.Station || ap.mode != WirelessMode.AccessPoint) return;
 
-        if (!ap.hasPower)
-        {
-            Debug.Log("❌ AP mati (tidak ada power)");
-            return;
-        }
-
-        if (mode != WirelessMode.Station) return;
-        if (ap == null) return;
-        if (ap.mode != WirelessMode.AccessPoint) return;
-
-        if (!string.IsNullOrEmpty(lockToAPSSID) && ap.ssid != lockToAPSSID)
-            return;
+        if (!string.IsNullOrEmpty(lockToAPSSID) && ap.ssid != lockToAPSSID) return;
 
         if (ap.securityMode != SecurityMode.None && ap.password != inputPassword)
         {
-            Debug.Log("❌ Password salah");
+            Debug.LogWarning("❌ Gagal menyambung: Keamanan WPA salah kunci rahasia.");
             return;
         }
 
@@ -328,7 +277,10 @@ public class WirelessDevice : MonoBehaviour
             connectedAP.connectedClients.Remove(this);
 
         connectedAP = ap;
-        ap.connectedClients.Add(this);
+        if (!ap.connectedClients.Contains(this))
+        {
+            ap.connectedClients.Add(this);
+        }
 
         isConnected = true;
     }
@@ -340,11 +292,21 @@ public class WirelessDevice : MonoBehaviour
 
         connectedAP = null;
         isConnected = false;
-
-        ipAddress = "0.0.0.0";
-        gateway = "0.0.0.0";
-
         SetStationInternetBridge(false);
+    }
+
+    private void ResetRadioStats()
+    {
+        currentSignal = -120f;
+        horizontalSignal = -120f;
+        verticalSignal = -120f;
+        txRate = 0; 
+        rxRate = 0; 
+        transmitCCQ = 0; 
+        airMaxQuality = 0;
+        airMaxCapacity = 0;
+        latency = 0; 
+        packetLoss = 100;
     }
 
     void SetStationInternetBridge(bool state)
@@ -354,87 +316,53 @@ public class WirelessDevice : MonoBehaviour
             lastInternetState = state;
 
             if (state && connectedAP != null)
-                Debug.Log($"🟢 {deviceName} GOT INTERNET via {connectedAP.deviceName} (Wireless Bridge Active)");
+                Debug.Log($"🟢 {deviceName} TERHUBUNG INTERNET -> Jembatan Nirkabel WDS Aktif via {connectedAP.deviceName}");
             else
-                Debug.Log($"🔴 {deviceName} LOST INTERNET (Wireless Bridge Closed)");
+                Debug.Log($"🔴 {deviceName} INTERNET TERPUTUS -> Jembatan Nirkabel Mati");
 
             if (InternetManager.Instance != null)
                 InternetManager.Instance.RefreshNetworkState();
         }
     }
 
+    // ================= KALKULASI RADIO (MATEMATIKA) =================
+
     public float GetEIRP()
     {
         float eirp = outputPower + antennaGain;
 
+        // Pembatasan hukum daya pancar EIRP di Indonesia (Maks 36 dBm / 4 Watt)
         if (calculateEIRP && eirp > MaxEIRP_Indonesia)
         {
-            outputPower -= (eirp - MaxEIRP_Indonesia);
             eirp = MaxEIRP_Indonesia;
         }
 
         return eirp;
     }
 
-    bool IsSameSubnet(string ip1, string ip2, string netmask)
-    {
-        string[] ipA = ip1.Split('.');
-        string[] ipB = ip2.Split('.');
-        string[] mask = netmask.Split('.');
-
-        if (ipA.Length != 4 || ipB.Length != 4 || mask.Length != 4) return false;
-
-        for (int i = 0; i < 4; i++)
-        {
-            int a = int.Parse(ipA[i]) & int.Parse(mask[i]);
-            int b = int.Parse(ipB[i]) & int.Parse(mask[i]);
-
-            if (a != b)
-                return false;
-        }
-
-        return true;
-    }
-
-    float GetChannelInterference(WirelessDevice ap)
-    {
-        int channelDiff = Mathf.Abs(channel - ap.channel);
-
-        if (channelDiff == 0) return 15f;
-        if (channelDiff <= 2) return 8f;
-        return 0f;
-    }
-
-    float CalculateSignal(WirelessDevice ap)
+    public float CalculateSignal(WirelessDevice ap)
     {
         float distance = Vector3.Distance(transform.position, ap.transform.position);
-        if (distance < 0.1f) distance = 0.1f;
+        if (distance < 1f) distance = 1f; // Mencegah pembagian nol / log minus dekat sekali
 
-        float distanceKM = distance / 1000f;
+        // 📡 RUMUS UTAMA: FREE SPACE PATH LOSS (FSPL) MENGGUNAKAN SATUAN METER
+        // FSPL (dB) = 20 log10(d dalam meter) + 20 log10(f dalam MHz) - 27.55
+        float fspl = (20f * Mathf.Log10(distance)) + (20f * Mathf.Log10(frequency)) - 27.55f;
 
-
-        float fspl =
-            20f * Mathf.Log10(distanceKM) +
-            20f * Mathf.Log10(frequency) -
-            27.55f;
-
+        // Kehilangan penguatan akibat pergeseran sudut antena (Beamwidth azimuth/elevasi)
         float txLoss = ap.CalculateAngleLoss(transform);
         float rxLoss = CalculateAngleLoss(ap.transform);
 
+        // Kehilangan performa akibat tumpang tindih channel frekuensi radio sekitar
         float interference = GetChannelInterference(ap);
 
+        // Hambatan fisik (Tembok, Pohon, Gedung dll) via Raycasting
         float obstacleLoss = GetObstacleLoss(ap);
 
-        float receivedPower =
-            ap.GetEIRP()
-            + antennaGain
-            - fspl
-            - txLoss
-            - rxLoss
-            - interference
-            - obstacleLoss;
+        // Rumus Sinyal Sisi Penerima (Link Budget)
+        float receivedPower = ap.GetEIRP() + antennaGain - fspl - txLoss - rxLoss - interference - obstacleLoss;
 
-        return receivedPower;
+        return Mathf.Clamp(receivedPower, -120f, -30f); // Clamp batas sinyal wajar hardware
     }
 
     float CalculateAngleLoss(Transform target)
@@ -445,15 +373,55 @@ public class WirelessDevice : MonoBehaviour
         if (angle <= beamWidth / 2f)
         {
             float ratio = angle / (beamWidth / 2f);
-            return ratio * ratio * 10f;
+            return ratio * ratio * 12f; // Kehilangan s/d 12 dB pada ujung tepi pancaran utama
         }
 
-        return 25f;
+        return 30f; // Sidelobe / Kebocoran belakang drop hingga 30 dB
     }
+
+    float GetObstacleLoss(WirelessDevice ap)
+    {
+        Vector3 direction = (ap.transform.position - transform.position);
+        float distance = direction.magnitude;
+
+        Ray ray = new Ray(transform.position, direction.normalized);
+        RaycastHit[] hits = Physics.RaycastAll(ray, distance, obstacleLayer);
+
+        float totalLoss = 0f;
+
+        foreach (var hit in hits)
+        {
+            // Mencegah deteksi tabrakan ke collider radio itu sendiri
+            if (hit.collider.gameObject == gameObject || hit.collider.gameObject == ap.gameObject) 
+                continue;
+
+            ObstacleMaterial obstacle = hit.collider.GetComponent<ObstacleMaterial>();
+            if (obstacle != null)
+            {
+                float loss = obstacle.GetLoss();
+                totalLoss += loss;
+                Debug.Log($"🧱 Hambatan: {hit.collider.name} | Redaman: {loss} dB");
+            }
+        }
+
+        return totalLoss;
+    }
+
+    float GetChannelInterference(WirelessDevice ap)
+    {
+        int channelDiff = Mathf.Abs(channel - ap.channel);
+
+        if (channelDiff == 0) return 0f;  // Channel sama persis (clean matching)
+        if (channelDiff <= 2) return 12f; // Sebagian frekuensi bertabrakan (Interferensi tinggi)
+        if (channelDiff <= 4) return 6f;  // Sedikit bersenggolan
+        return 0f;                        // Bebas hambatan channel (Non-overlapping)
+    }
+
+    // ================= FUNGSI UTILITAS =================
 
     public string GetFrequencyBand()
     {
-        return frequency < 3000 ? "2.4 GHz" : "5 GHz";
+        return frequency < 4000f ? "2.4 GHz" : "5 GHz";
     }
 
     public float CalculateDistance()
@@ -462,13 +430,53 @@ public class WirelessDevice : MonoBehaviour
         return Vector3.Distance(transform.position, connectedAP.transform.position);
     }
 
-    public int GetConnectedStationsCount()
+    public int GetConnectedStationsCount() => connectedClients.Count;
+    public string GetAPMacAddress() => wlan0Mac;
+
+    public void SetDeviceName(string newName)
     {
-        return connectedClients.Count;
+        deviceName = newName;
+        gameObject.name = newName;
     }
 
-    public string GetAPMacAddress()
+    private string IncrementMac(string mac, int increment)
     {
-        return wlan0Mac;
+        string[] parts = mac.Split(':');
+        if (parts.Length != 6) return mac;
+        
+        int lastByte = System.Convert.ToInt32(parts[5], 16);
+        lastByte = (lastByte + increment) % 256;
+        parts[5] = lastByte.ToString("X2");
+        return string.Join(":", parts);
+    }
+
+    private string GenerateMacAddress()
+    {
+        byte[] mac = new byte[6];
+        // Vendor OUI bawaan Ubiquiti Networks original
+        mac[0] = 0x04; mac[1] = 0x18; mac[2] = 0xD6;
+
+        System.Random rand = new System.Random();
+        mac[3] = (byte)rand.Next(0, 256);
+        mac[4] = (byte)rand.Next(0, 256);
+        mac[5] = (byte)rand.Next(0, 256);
+
+        return System.BitConverter.ToString(mac).Replace("-", ":");
+    }
+
+    private bool IsSameSubnet(string ip1, string ip2, string netmask)
+    {
+        string[] ipA = ip1.Split('.');
+        string[] ipB = ip2.Split('.');
+        string[] mask = netmask.Split('.');
+
+        if (ipA.Length != 4 || ipB.Length != 4 || mask.Length != 4) return false;
+
+        for (int i = 0; i < 4; i++)
+        {
+            if ((int.Parse(ipA[i]) & int.Parse(mask[i])) != (int.Parse(ipB[i]) & int.Parse(mask[i])))
+                return false;
+        }
+        return true;
     }
 }

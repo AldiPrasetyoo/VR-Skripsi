@@ -6,6 +6,9 @@ namespace HPhysic
     {
         public bool occupied;
 
+        [Header("Nomor Titik Tower")]
+        public int nomorSlot = 2;
+
         [Header("Ghost Position")]
         public Transform ghostPoint;
 
@@ -34,11 +37,14 @@ namespace HPhysic
 
         public void AttachDevice(GameObject device)
         {
+            if (device == null) return;
+
             occupied = true;
             attachedDevice = device;
 
             device.transform.position = ghostPoint.position;
             device.transform.rotation = ghostPoint.rotation;
+            device.transform.SetParent(ghostPoint);
 
             Rigidbody rb = device.GetComponent<Rigidbody>();
 
@@ -46,6 +52,53 @@ namespace HPhysic
             {
                 rb.isKinematic = true;
                 rb.useGravity = false;
+            }
+
+            CekMisiPemasangan(device);
+        }
+
+    private SensorGedung CariSensorGedungDariParent()
+        {
+            Transform current = transform;
+
+            while (current != null)
+            {
+                SensorGedung sensor = current.GetComponentInChildren<SensorGedung>(true);
+
+                if (sensor != null)
+                    return sensor;
+
+                current = current.parent;
+            }
+
+            return null;
+        }
+
+    private void CekMisiPemasangan(GameObject device)
+        {
+            WirelessDevice wirelessDevice = device.GetComponent<WirelessDevice>();
+
+            if (wirelessDevice == null)
+            {
+                Debug.LogWarning("Object yang dipasang bukan WirelessDevice.");
+                return;
+            }
+
+            SensorGedung sensorGedung = CariSensorGedungDariParent();
+
+            if (sensorGedung == null)
+            {
+                Debug.LogWarning("TowerMountSlot tidak menemukan SensorGedung di area gedung.");
+                return;
+            }
+
+            if (ManagerMisi.Instance != null)
+            {
+                ManagerMisi.Instance.CekMisiPasangNanoKeTower(
+                    wirelessDevice,
+                    sensorGedung.idZonaGedung,
+                    nomorSlot
+                );
             }
         }
 
