@@ -9,6 +9,9 @@ public class InputManagerPlayer : MonoBehaviour
     [Header("Timeline")]
     public PlayableDirector mainTimeline;
 
+    [Header("Scene Setelah Cinematic")]
+    public string nextSceneName = "NamaSceneSelanjutnya";
+
     [Header("UI")]
     public GameObject inputNamePanel;
     public TMP_InputField nameInputField;
@@ -20,6 +23,9 @@ public class InputManagerPlayer : MonoBehaviour
     public CanvasGroup fadeCanvasGroup;
     public float fadeDuration = 1f;
 
+    [Header("Typing Subtitle")]
+    public float typingSpeed = 0.035f;
+
     [Header("Object Awal yang Dimatikan Setelah Mulai")]
     public GameObject xrOrigin;
     public GameObject bg;
@@ -27,9 +33,15 @@ public class InputManagerPlayer : MonoBehaviour
     [Header("Camera Object")]
     public GameObject cinematicCamera;
     public GameObject cinemachineKota;
-    public GameObject cinemachineGedung;
+    public GameObject cinemachineGedung1;
+    public GameObject cinemachineGedung2;
 
     public static string playerName;
+
+    private string currentSubtitle = "";
+    private Coroutine typingCoroutine;
+    private bool cinematicStarted = false;
+    private bool cinematicFinished = false;
 
     private void Start()
     {
@@ -48,20 +60,26 @@ public class InputManagerPlayer : MonoBehaviour
         if (cinemachineKota != null)
             cinemachineKota.SetActive(false);
 
-        if (cinemachineGedung != null)
-            cinemachineGedung.SetActive(false);
+        if (cinemachineGedung1 != null)
+            cinemachineGedung1.SetActive(false);
+
+        if (cinemachineGedung2 != null)
+            cinemachineGedung2.SetActive(false);
 
         if (subtitleText != null)
             subtitleText.text = "";
 
-        if(canvasCinematic != null)
+        if (canvasCinematic != null)
             canvasCinematic.SetActive(false);
 
         if (fadeCanvasGroup != null)
             fadeCanvasGroup.alpha = 0f;
 
         if (mainTimeline != null)
+        {
             mainTimeline.Stop();
+            mainTimeline.stopped += OnTimelineFinished;
+        }
 
         if (startButton != null)
         {
@@ -96,6 +114,19 @@ public class InputManagerPlayer : MonoBehaviour
         PlayerPrefs.SetString("PlayerName", inputName);
         PlayerPrefs.Save();
 
+        cinematicStarted = true;
+        cinematicFinished = false;
+        currentSubtitle = "";
+
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(typingCoroutine);
+            typingCoroutine = null;
+        }
+
+        if (subtitleText != null)
+            subtitleText.text = "";
+
         if (inputNamePanel != null)
             inputNamePanel.SetActive(false);
 
@@ -114,10 +145,11 @@ public class InputManagerPlayer : MonoBehaviour
         if (cinemachineKota != null)
             cinemachineKota.SetActive(true);
 
+        if (cinemachineGedung1 != null)
+            cinemachineGedung1.SetActive(true);
 
-
-        if (cinemachineGedung != null)
-            cinemachineGedung.SetActive(true);
+        if (cinemachineGedung2 != null)
+            cinemachineGedung2.SetActive(true);
 
         if (mainTimeline != null)
         {
@@ -132,28 +164,87 @@ public class InputManagerPlayer : MonoBehaviour
     {
         if (subtitleText == null) return;
 
-        if (time >= 0f && time < 4f)
-            subtitleText.text = "Selamat datang pada simulasi jaringan wireless point to point.";
-        else if (time >= 4f && time < 8f)
-            subtitleText.text = "Gedung 1 merupakan gedung pusat yang memiliki sumber internet utama.";
-        else if (time >= 8f && time < 12f)
-            subtitleText.text = "Gedung 2 merupakan gedung cabang yang belum mendapatkan akses internet.";
-        else if (time >= 12f && time < 17f)
-            subtitleText.text = "Masalah yang harus diselesaikan adalah menghubungkan jaringan dari Gedung 1 ke Gedung 2.";
-        else if (time >= 17f && time < 22f)
-            subtitleText.text = "Untuk membangun koneksi antar gedung, diperlukan perangkat NanoStation dengan konsep point to point.";
-        else if (time >= 22f && time < 27f)
-            subtitleText.text = "Perangkat NanoStation harus dipasang pada tower dan mendapatkan sumber daya melalui PoE.";
-        else if (time >= 27f && time < 33f)
-            subtitleText.text = "Gedung pusat perlu dikonfigurasi sebagai Access Point, sedangkan gedung cabang dikonfigurasi sebagai Station.";
-        else if (time >= 33f && time < 38f)
-            subtitleText.text = "Selain pemasangan perangkat, konfigurasi IP Address, SSID, keamanan wireless, dan kabel LAN harus dilakukan dengan benar.";
-        else if (time >= 38f && time < 43f)
-            subtitleText.text = "Keberhasilan jaringan akan diuji melalui koneksi perangkat client di ruang komputer.";
-        else if (time >= 43f && time < 48f)
-            subtitleText.text = "Tugas Anda adalah menyelesaikan masalah jaringan hingga Gedung 2 berhasil terhubung ke internet.";
-        else
+        string newSubtitle = "";
+
+        if (time >= 0.5f && time < 12f)
+        {
+            newSubtitle = "Selamat datang " + PlayerData.playerName +
+                ". Perhatikan kondisi jaringan pada area simulasi ini.";
+        }
+        else if (time >= 12.5f && time < 23f)
+        {
+            newSubtitle = "Gedung 1 adalah gedung pusat yang memiliki sumber internet utama.";
+        }
+        else if (time >= 25f && time < 35f)
+        {
+            newSubtitle = "Gedung 2 adalah gedung cabang yang belum mendapatkan akses internet.";
+        }
+        else if (time >= 35f && time < 40f)
+        {
+            newSubtitle = "Kedua gedung harus dihubungkan menggunakan NanoStation secara point to point.";
+        }
+        else if (time >= 40f && time < 48f)
+        {
+            newSubtitle = "Selesaikan konfigurasi jaringan hingga Gedung 2 berhasil terhubung ke internet.";
+        }
+
+        if (newSubtitle != currentSubtitle)
+        {
+            currentSubtitle = newSubtitle;
+
+            if (typingCoroutine != null)
+                StopCoroutine(typingCoroutine);
+
+            typingCoroutine = StartCoroutine(TypeSubtitle(newSubtitle));
+        }
+    }
+
+    private IEnumerator TypeSubtitle(string text)
+    {
+        subtitleText.text = "";
+
+        if (string.IsNullOrEmpty(text))
+            yield break;
+
+        foreach (char letter in text)
+        {
+            subtitleText.text += letter;
+            yield return new WaitForSeconds(typingSpeed);
+        }
+    }
+
+    private void OnTimelineFinished(PlayableDirector director)
+    {
+        if (!cinematicStarted) return;
+        if (cinematicFinished) return;
+        if (director != mainTimeline) return;
+
+        cinematicFinished = true;
+
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(typingCoroutine);
+            typingCoroutine = null;
+        }
+
+        if (subtitleText != null)
             subtitleText.text = "";
+
+        StartCoroutine(GoToNextScene());
+    }
+
+    private IEnumerator GoToNextScene()
+    {
+        yield return StartCoroutine(Fade(0f, 1f));
+
+        if (VRSceneTransition.Instance != null)
+        {
+            VRSceneTransition.Instance.LoadScene(nextSceneName);
+        }
+        else
+        {
+            Debug.LogWarning("VRSceneTransition.Instance tidak ditemukan. Pastikan prefab/script VRSceneTransition ada di scene.");
+        }
     }
 
     private IEnumerator Fade(float from, float to)
