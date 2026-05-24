@@ -13,6 +13,7 @@ public class AktifUITele : MonoBehaviour
         {
             if (panelTombol != null)
             {
+                Debug.Log("Player masuk zona teleport. Menampilkan tombol.");
                 panelTombol.SetActive(true); // Memunculkan tombol
             }
         }

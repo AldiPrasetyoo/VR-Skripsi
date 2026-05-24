@@ -1,18 +1,33 @@
 using UnityEngine;
 
-public class CamMiniMap : MonoBehaviour
+public class MinimapFollowPlayer : MonoBehaviour
 {
-    public Transform player; // Tarik XR Origin (atau Main Camera) ke sini di Inspector
-    public float tinggiKamera = 50f;
+    [Header("Target Player / XR Origin")]
+    public Transform target;
 
-    void LateUpdate()
+    [Header("Tinggi Kamera Minimap")]
+    public float height = 50f;
+
+    [Header("Ikuti Rotasi Y Player")]
+    public bool rotateWithPlayer = false;
+
+    private void LateUpdate()
     {
-        if (player != null)
+        if (target == null) return;
+
+        transform.position = new Vector3(
+            target.position.x,
+            target.position.y + height,
+            target.position.z
+        );
+
+        if (rotateWithPlayer)
         {
-            // Kamera mengikuti posisi X dan Z pemain, tapi ketinggian Y tetap
-            Vector3 posisiBaru = player.position;
-            posisiBaru.y = tinggiKamera;
-            transform.position = posisiBaru;
+            transform.rotation = Quaternion.Euler(90f, target.eulerAngles.y, 0f);
+        }
+        else
+        {
+            transform.rotation = Quaternion.Euler(90f, 0f, 0f);
         }
     }
 }

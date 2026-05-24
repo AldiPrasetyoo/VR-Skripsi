@@ -8,6 +8,13 @@ TagManager:
   - Right Hand
   - Left Hand
   - Tangga
+  - door
+  - button f4
+  - button f5
+  - button f3
+  - button f2
+  - button f1
+  - button f6
   layers:
   - Default
   - TransparentFX
@@ -18,12 +25,12 @@ TagManager:
   - Obstacle
   - Tangga
   - Teleport
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Grab
+  - Vehicle
+  - Jalan
+  - redBlock
+  - vehiclePoint
+  - HUD
   - 
   - 
   - 
