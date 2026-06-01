@@ -1,77 +1,159 @@
-using Unity.Burst.CompilerServices;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class VehicleAi : MonoBehaviour
 {
-
     public string state = "idle";
-    NavMeshAgent agent;
-    VehicleTarget currentTarget;
+
+    [Header("AI")]
+    public NavMeshAgent agent;
+    public VehicleTarget currentTarget;
+
+    [Header("Traffic Light Block")]
     public GameObject redLightBlockPrefab;
-    GameObject redLightBlock;
+    private GameObject redLightBlock;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [Header("Layer")]
+    public int targetLayer = 13;
+    public int stopLayer = 12;
+
+    [Header("Distance")]
+    public float targetSearchDistance = 400f;
+    public float stopCheckDistance = 8f;
+    public float arriveDistance = 1f;
+
+    private void Start()
     {
-        redLightBlock = Instantiate(redLightBlockPrefab, transform.position - (transform.forward * 4), transform.rotation);
-        redLightBlock.transform.parent = this.transform;
+        if (agent == null)
+            agent = GetComponent<NavMeshAgent>();
 
-        agent = GetComponent<NavMeshAgent>();
-        
+        if (redLightBlockPrefab != null)
+        {
+            redLightBlock = Instantiate(
+                redLightBlockPrefab,
+                transform.position - (transform.forward * 4f),
+                transform.rotation
+            );
+
+            redLightBlock.transform.SetParent(transform);
+            redLightBlock.SetActive(false);
+        }
+        else
+        {
+            Debug.LogWarning("RedLightBlockPrefab belum diisi di Inspector.");
+        }
+
+        if (agent == null)
+        {
+            Debug.LogError("NavMeshAgent tidak ditemukan di object: " + gameObject.name);
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        if (state == "idle") {
-            RaycastHit hit;
-            int layerMask = 1 << 13;
+        if (agent == null) return;
 
-            Vector3 direction = transform.forward;
-            if(Mathf.Abs(direction.x) > Mathf.Abs(direction.z))
-            {
-                direction = new Vector3(Mathf.Round(direction.x), 0, 0);
-            }
-            else
-            {
-                direction = new Vector3(0, 0, Mathf.Round(direction.z));
-            }
-
-            if (Physics.SphereCast(transform.position, 4, direction, out hit, 400,layerMask)) {
-                
-                currentTarget = hit.transform.GetComponent<VehicleTarget>();
-                agent.SetDestination(hit.transform.position);
-                state = "moving";
-            }
-        }
-        if(state == "moving")
+        if (state == "idle")
         {
-            if(agent.remainingDistance < 1f && !agent.pathPending)
+            FindFirstTarget();
+        }
+        else if (state == "moving")
+        {
+            MoveToNextTarget();
+            CheckRedLightBlock();
+        }
+    }
+
+    private void FindFirstTarget()
+    {
+        RaycastHit hit;
+        int layerMask = 1 << targetLayer;
+
+        Vector3 direction = GetStraightDirection();
+
+        if (Physics.SphereCast(transform.position, 4f, direction, out hit, targetSearchDistance, layerMask))
+        {
+            VehicleTarget target = hit.transform.GetComponent<VehicleTarget>();
+
+            if (target == null)
             {
-                int nextLength = currentTarget.nextTarget.Length;
-                if (nextLength > 0)
-                {
-                    int targetIndex = Random.Range(0, nextLength);
-                    currentTarget = currentTarget.nextTarget[targetIndex];
-                    agent.SetDestination(currentTarget.transform.position);
-                }
-                else {
-                    state = "idle";        
-                }
+                Debug.LogWarning("Object kena raycast tapi tidak punya VehicleTarget: " + hit.transform.name);
+                return;
             }
 
-            RaycastHit hit2;
-            int layerMask = 1 << 12;
-            if (Physics.Raycast(transform.position, transform.forward, out hit2, 8, layerMask)) { 
-                agent.isStopped = true;
-                redLightBlock.active = true;
-            }
-            else
-            {
-                agent.isStopped = false;
-                redLightBlock.active = false;
-            }
+            currentTarget = target;
+            agent.SetDestination(currentTarget.transform.position);
+            state = "moving";
         }
+    }
+
+    private void MoveToNextTarget()
+    {
+        if (currentTarget == null)
+        {
+            state = "idle";
+            return;
+        }
+
+        if (agent.pathPending) return;
+
+        if (agent.remainingDistance < arriveDistance)
+        {
+            if (currentTarget.nextTarget == null || currentTarget.nextTarget.Length == 0)
+            {
+                state = "idle";
+                return;
+            }
+
+            int targetIndex = Random.Range(0, currentTarget.nextTarget.Length);
+            VehicleTarget next = currentTarget.nextTarget[targetIndex];
+
+            if (next == null)
+            {
+                Debug.LogWarning("Ada Next Target yang kosong di: " + currentTarget.name);
+                state = "idle";
+                return;
+            }
+
+            currentTarget = next;
+            agent.SetDestination(currentTarget.transform.position);
+        }
+    }
+
+    private void CheckRedLightBlock()
+    {
+        RaycastHit hit;
+        int layerMask = 1 << stopLayer;
+
+        if (Physics.Raycast(transform.position, transform.forward, out hit, stopCheckDistance, layerMask))
+        {
+            agent.isStopped = true;
+
+            if (redLightBlock != null)
+                redLightBlock.SetActive(true);
+        }
+        else
+        {
+            agent.isStopped = false;
+
+            if (redLightBlock != null)
+                redLightBlock.SetActive(false);
+        }
+    }
+
+    private Vector3 GetStraightDirection()
+    {
+        Vector3 direction = transform.forward;
+
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.z))
+        {
+            direction = new Vector3(Mathf.Round(direction.x), 0f, 0f);
+        }
+        else
+        {
+            direction = new Vector3(0f, 0f, Mathf.Round(direction.z));
+        }
+
+        return direction.normalized;
     }
 }

@@ -42,22 +42,25 @@ namespace HPhysic
             occupied = true;
             attachedDevice = device;
 
+            // Snap ke posisi ghost tanpa dijadikan child
             device.transform.position = ghostPoint.position;
             device.transform.rotation = ghostPoint.rotation;
-            device.transform.SetParent(ghostPoint);
 
             Rigidbody rb = device.GetComponent<Rigidbody>();
 
             if (rb != null)
             {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
                 rb.isKinematic = true;
                 rb.useGravity = false;
             }
 
+            // Cek misi setelah device berhasil dipasang
             CekMisiPemasangan(device);
         }
 
-    private SensorGedung CariSensorGedungDariParent()
+        private SensorGedung CariSensorGedungDariParent()
         {
             Transform current = transform;
 
@@ -74,7 +77,7 @@ namespace HPhysic
             return null;
         }
 
-    private void CekMisiPemasangan(GameObject device)
+        private void CekMisiPemasangan(GameObject device)
         {
             WirelessDevice wirelessDevice = device.GetComponent<WirelessDevice>();
 
@@ -100,6 +103,10 @@ namespace HPhysic
                     nomorSlot
                 );
             }
+            else
+            {
+                Debug.LogWarning("ManagerMisi.Instance tidak ditemukan.");
+            }
         }
 
         public void Detach()
@@ -109,8 +116,6 @@ namespace HPhysic
                 occupied = false;
                 return;
             }
-
-            attachedDevice.transform.SetParent(null);
 
             Rigidbody rb = attachedDevice.GetComponent<Rigidbody>();
 

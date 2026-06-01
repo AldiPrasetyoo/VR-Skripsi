@@ -1,157 +1,463 @@
 using UnityEngine;
 using HPhysic;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(NetworkDevice))]
 public class ComputerDevice : MonoBehaviour
 {
-    // ================= GENERAL =================
-    public string deviceName;
-
     [HideInInspector] public NetworkDevice networkDevice;
 
-    public bool isConnected;   // kabel ke switch
-    public bool hasInternet;
+    // ================= STATUS =================
+    [Header("Status")]
+    public bool isConnected;
+    public bool physicalLinkActive;
 
-    // ================= NETWORK CONFIG (STATIC) =================
-    [Header("STATIC IP CONFIG")]
+    public bool ipConfigValid;
+    public bool networkValid;
+    public bool gatewayReachable;
+    public bool dnsValid;
+    public bool hasInternet;
+    public bool ipConflict;
+
+    [TextArea]
+    public string networkMessage;
+
+    // ================= IP CONFIG =================
+    [Header("IPv4 Configuration")]
     public string ipAddress = "0.0.0.0";
     public string gateway = "0.0.0.0";
     public string netmask = "255.255.255.0";
-
-    // ================= STATUS =================
-    public bool networkValid;
+    public string dns = "8.8.8.8";
 
     // ================= LAN =================
-    [Header("PORT")]
+    [Header("LAN Port")]
     public Connector lanConnector;
-
     public string lanStatus = "Unplugged";
 
-    // ================= UNITY =================
-    void Awake()
+    private static readonly List<ComputerDevice> allComputers = new List<ComputerDevice>();
+
+    private void Awake()
     {
         networkDevice = GetComponent<NetworkDevice>();
-        deviceName = gameObject.name;
+
+        if (!allComputers.Contains(this))
+        {
+            allComputers.Add(this);
+        }
     }
 
-    void Update()
+    private void OnDestroy()
+    {
+        if (allComputers.Contains(this))
+        {
+            allComputers.Remove(this);
+        }
+    }
+
+    private void Update()
     {
         UpdateLANStatus();
-        HandleConnection();
+        UpdatePhysicalLink();
         ValidateNetwork();
         UpdateInternetState();
     }
 
-    // ================= 🔌 LAN STATUS =================
-    void UpdateLANStatus()
+    // ================= LAN STATUS =================
+
+    private void UpdateLANStatus()
     {
-        lanStatus = (lanConnector != null && lanConnector.ConnectedTo != null)
-            ? "Connected"
-            : "Unplugged";
+        if (lanConnector != null && lanConnector.ConnectedTo != null)
+        {
+            lanStatus = "Connected";
+        }
+        else
+        {
+            lanStatus = "Unplugged";
+        }
     }
 
-    // ================= 🔗 CONNECTION =================
-    void HandleConnection()
+    private void UpdatePhysicalLink()
     {
-        isConnected = lanStatus == "Connected";
+        physicalLinkActive = lanStatus == "Connected";
+        isConnected = physicalLinkActive;
     }
 
-    // ================= 🧠 VALIDASI NETWORK =================
-    void ValidateNetwork()
+    // ================= VALIDASI NETWORK =================
+
+    private void ValidateNetwork()
     {
-        if (!isConnected)
+        ipConfigValid = false;
+        networkValid = false;
+        gatewayReachable = false;
+        dnsValid = false;
+        ipConflict = false;
+        networkMessage = "";
+
+        if (!physicalLinkActive)
         {
-            networkValid = false;
+            networkMessage = "Cable unplugged.";
             return;
         }
 
-        // IP kosong
-        if (ipAddress == "0.0.0.0" || gateway == "0.0.0.0")
+        if (!TryParseIP(ipAddress, out uint ip))
         {
-            networkValid = false;
+            networkMessage = "Invalid IP address.";
             return;
         }
 
-        // subnet tidak sama
-        if (!IsSameSubnet(ipAddress, gateway, netmask))
+        if (!TryParseIP(netmask, out uint mask))
         {
-            networkValid = false;
+            networkMessage = "Invalid subnet mask.";
             return;
         }
 
+        if (ip == 0)
+        {
+            networkMessage = "IP address cannot be 0.0.0.0.";
+            return;
+        }
+
+        if (!IsValidSubnetMask(mask))
+        {
+            networkMessage = "Invalid subnet mask.";
+            return;
+        }
+
+        if (!IsUsableHostAddress(ip, mask))
+        {
+            networkMessage = "IP address is network or broadcast address.";
+            return;
+        }
+
+        if (HasIPConflict(ip))
+        {
+            ipConflict = true;
+            networkMessage = "IP conflict detected.";
+            return;
+        }
+
+        // IP lokal valid.
+        // Ini cukup untuk akses Nano satu subnet.
+        ipConfigValid = true;
         networkValid = true;
-    }
+        networkMessage = "Local network configuration valid.";
 
-    // ================= 🌍 INTERNET =================
-    void UpdateInternetState()
-    {
-        bool internet = networkValid && networkDevice.hasInternet;
-
-        if (hasInternet != internet)
+        // ================= GATEWAY =================
+        if (!string.IsNullOrWhiteSpace(gateway) && gateway.Trim() != "0.0.0.0")
         {
-            hasInternet = internet;
+            if (!TryParseIP(gateway, out uint gw))
+            {
+                networkValid = false;
+                networkMessage = "Invalid gateway address.";
+                return;
+            }
 
-            if (hasInternet)
-                Debug.Log($"🟢 {deviceName} CONNECTED TO INTERNET");
-            else
-                Debug.Log($"🔴 {deviceName} NO INTERNET");
+            if (!IsUsableHostAddress(gw, mask))
+            {
+                networkValid = false;
+                networkMessage = "Gateway is network or broadcast address.";
+                return;
+            }
+
+            if (gw == ip)
+            {
+                networkValid = false;
+                networkMessage = "Gateway cannot be same as computer IP.";
+                return;
+            }
+
+            if (!IsSameSubnet(ip, gw, mask))
+            {
+                networkValid = false;
+                networkMessage = "Gateway is not in the same subnet.";
+                return;
+            }
+
+            gatewayReachable = IsGatewayReachable(gw);
+        }
+
+        // ================= DNS =================
+        if (!string.IsNullOrWhiteSpace(dns) && dns.Trim() != "0.0.0.0")
+        {
+            if (TryParseIP(dns, out uint dnsIP))
+            {
+                if (IsUsableHostAddress(dnsIP, mask))
+                {
+                    dnsValid = true;
+                }
+            }
+        }
+
+        if (gatewayReachable && dnsValid)
+        {
+            networkMessage = "Network valid. Gateway and DNS configured.";
+        }
+        else if (gatewayReachable && !dnsValid)
+        {
+            networkMessage = "Gateway reachable. DNS not valid or not configured.";
+        }
+        else
+        {
+            networkMessage = "Local network valid. Gateway not reachable.";
         }
     }
 
-    // ================= 🔍 SUBNET =================
-    bool IsSameSubnet(string ip1, string ip2, string netmask)
-    {
-        string[] a = ip1.Split('.');
-        string[] b = ip2.Split('.');
-        string[] m = netmask.Split('.');
+    // ================= INTERNET =================
 
-        if (a.Length != 4 || b.Length != 4 || m.Length != 4) return false;
+    private void UpdateInternetState()
+    {
+        bool internet =
+            physicalLinkActive &&
+            ipConfigValid &&
+            networkValid &&
+            gatewayReachable &&
+            dnsValid &&
+            networkDevice != null &&
+            networkDevice.hasInternet;
+
+        hasInternet = internet;
+    }
+
+    // ================= TEST CONNECTION =================
+
+    public string TestConnection()
+    {
+        if (!physicalLinkActive)
+        {
+            return "Cable Unplugged ❌";
+        }
+
+        if (!ipConfigValid)
+        {
+            return "IP Configuration Invalid ❌\n" + networkMessage;
+        }
+
+        if (ipConflict)
+        {
+            return "IP Conflict ❌";
+        }
+
+        if (hasInternet)
+        {
+            return "Internet Access ✅";
+        }
+
+        if (networkValid && !gatewayReachable)
+        {
+            return "Local Network Ready ✅\nGateway Not Reachable ❌";
+        }
+
+        if (networkValid && gatewayReachable && !dnsValid)
+        {
+            return "Gateway Reachable ✅\nDNS Invalid ❌";
+        }
+
+        return "Connected, No Internet Access ❌\n" + networkMessage;
+    }
+
+    // ================= DIPANGGIL COMPUTERHOMEUI =================
+
+    public void SetIP(string ip)
+    {
+        ipAddress = ip.Trim();
+    }
+
+    public void SetGateway(string gw)
+    {
+        gateway = gw.Trim();
+    }
+
+    public void SetNetmask(string mask)
+    {
+        netmask = mask.Trim();
+    }
+
+    public void SetDNS(string newDns)
+    {
+        dns = newDns.Trim();
+    }
+
+    // ================= AKSES LOKAL =================
+
+    public bool CanReachLocalIP(string targetIP, out string message)
+    {
+        message = "";
+
+        if (!physicalLinkActive)
+        {
+            message = "Kabel LAN komputer belum tersambung.";
+            return false;
+        }
+
+        if (!ipConfigValid)
+        {
+            message = "Konfigurasi IP komputer belum valid.";
+            return false;
+        }
+
+        if (!TryParseIP(ipAddress, out uint pcIP))
+        {
+            message = "IP komputer tidak valid.";
+            return false;
+        }
+
+        if (!TryParseIP(netmask, out uint mask))
+        {
+            message = "Subnet mask komputer tidak valid.";
+            return false;
+        }
+
+        if (!TryParseIP(targetIP, out uint target))
+        {
+            message = "IP tujuan tidak valid.";
+            return false;
+        }
+
+        if (!IsSameSubnet(pcIP, target, mask))
+        {
+            message = "Komputer dan perangkat tujuan tidak berada pada subnet yang sama.";
+            return false;
+        }
+
+        message = "Perangkat berada dalam subnet yang sama.";
+        return true;
+    }
+
+    // ================= IP HELPER =================
+
+    public bool TryParseIP(string ip, out uint result)
+    {
+        result = 0;
+
+        if (string.IsNullOrWhiteSpace(ip))
+        {
+            return false;
+        }
+
+        string[] parts = ip.Trim().Split('.');
+
+        if (parts.Length != 4)
+        {
+            return false;
+        }
 
         for (int i = 0; i < 4; i++)
         {
-            int ipA = int.Parse(a[i]) & int.Parse(m[i]);
-            int ipB = int.Parse(b[i]) & int.Parse(m[i]);
-
-            if (ipA != ipB)
+            if (!int.TryParse(parts[i], out int value))
+            {
                 return false;
+            }
+
+            if (value < 0 || value > 255)
+            {
+                return false;
+            }
+
+            result = (result << 8) + (uint)value;
         }
 
         return true;
     }
 
-    // ================= 🧪 TEST BUTTON =================
-    public string TestConnection()
+    public bool IsSameSubnet(uint ip1, uint ip2, uint mask)
     {
-        if (!isConnected)
-            return "Cable Unplugged ❌";
-
-        if (!networkValid)
-            return "Network Invalid ❌";
-
-        if (hasInternet)
-            return "Ping Success ✅";
-
-        return "Request Time Out ❌";
+        return GetNetworkAddress(ip1, mask) == GetNetworkAddress(ip2, mask);
     }
 
-    // ================= ⚙️ CONFIG DARI UI =================
-    public void SetIP(string ip)
+    public uint GetNetworkAddress(uint ip, uint mask)
     {
-        ipAddress = ip;
+        return ip & mask;
     }
 
-    public void SetGateway(string gw)
+    public uint GetBroadcastAddress(uint ip, uint mask)
     {
-        gateway = gw;
+        return (ip & mask) | ~mask;
     }
 
-    public void SetNetmask(string mask)
+    public bool IsUsableHostAddress(uint ip, uint mask)
     {
-        netmask = mask;
+        uint network = GetNetworkAddress(ip, mask);
+        uint broadcast = GetBroadcastAddress(ip, mask);
+
+        return ip != network && ip != broadcast;
     }
 
-    public void SetDeviceName(string newName)
+    private bool IsValidSubnetMask(uint mask)
     {
-    gameObject.name = newName;
+        if (mask == 0 || mask == uint.MaxValue)
+        {
+            return false;
+        }
+
+        bool foundZero = false;
+
+        for (int i = 31; i >= 0; i--)
+        {
+            bool bitIsOne = (mask & (1u << i)) != 0;
+
+            if (!bitIsOne)
+            {
+                foundZero = true;
+            }
+            else if (foundZero)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // ================= IP CONFLICT =================
+
+    private bool HasIPConflict(uint myIP)
+    {
+        foreach (ComputerDevice other in allComputers)
+        {
+            if (other == null) continue;
+            if (other == this) continue;
+            if (!other.physicalLinkActive) continue;
+
+            if (!other.TryParseIP(other.ipAddress, out uint otherIP))
+            {
+                continue;
+            }
+
+            if (otherIP == myIP)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // ================= GATEWAY =================
+
+    private bool IsGatewayReachable(uint gatewayIP)
+    {
+        foreach (ComputerDevice other in allComputers)
+        {
+            if (other == null) continue;
+            if (other == this) continue;
+            if (!other.physicalLinkActive) continue;
+
+            if (!other.TryParseIP(other.ipAddress, out uint otherIP))
+            {
+                continue;
+            }
+
+            if (otherIP == gatewayIP)
+            {
+                return true;
+            }
+        }
+
+        if (networkDevice != null && networkDevice.hasInternet)
+        {
+            return true;
+        }
+
+        return false;
     }
 }

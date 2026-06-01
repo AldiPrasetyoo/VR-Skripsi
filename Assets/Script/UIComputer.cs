@@ -21,7 +21,7 @@ public class UI_ComputerDevice : MonoBehaviour
     [Header("Setting Panel")]
     public GameObject settingPanel;
     public TMP_Text judulSettingText;
-    public TMP_InputField deviceNameInput;
+    // public TMP_InputField deviceNameInput;
     public TMP_InputField ipInput;
     public TMP_InputField gatewayInput;
     public TMP_InputField netmaskInput;
@@ -62,7 +62,7 @@ public class UI_ComputerDevice : MonoBehaviour
         settingPanel.SetActive(true);
         statusPanel.SetActive(false);
 
-        deviceNameInput.text = device.gameObject.name;
+        // deviceNameInput.text = device.gameObject.name;
         ipInput.text = device.ipAddress;
         gatewayInput.text = device.gateway;
         netmaskInput.text = device.netmask;
@@ -74,7 +74,7 @@ public class UI_ComputerDevice : MonoBehaviour
         if (device == null) return;
 
         device.SetIP(ipInput.text);
-        device.SetDeviceName(deviceNameInput.text);
+        // device.SetDeviceName(deviceNameInput.text);
         device.SetGateway(gatewayInput.text);
         device.SetNetmask(netmaskInput.text);
 

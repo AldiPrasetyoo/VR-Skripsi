@@ -80,9 +80,9 @@ public class UI_WirelessDevice : MonoBehaviour
     public Image[] signalBars;
     public Image[] signalBarsPersenQuality;
     public Image[] signalBarsPersenCapacity;
-    public Color offColor = new Color(0.2f, 0.2f, 0.2f, 0.5f); 
-    public Color weakColor = Color.red;    
-    public Color fairColor = Color.yellow;  
+    public Color offColor = new Color(0.2f, 0.2f, 0.2f, 0.5f);
+    public Color weakColor = Color.red;
+    public Color fairColor = Color.yellow;
     public Color strongColor = Color.green;
 
     [Header("Wireless Configuration")]
@@ -155,57 +155,25 @@ public class UI_WirelessDevice : MonoBehaviour
     #endregion
 
     #region Unity Methods
-    void Update()
-    {
-        if (mainPanel.activeSelf && device != null)
-        {
-            signalStrengthText.text = device.currentSignal.ToString("F2") + " dBm";
-            noiseFloorText.text = device.noiseFloor.ToString("F2") + " dBm";
-            horizonalVerticalText.text = device.horizontalSignal.ToString("F2") + " / " + device.verticalSignal.ToString("F2") + " dBm";
-            TXRXText.text = device.txRate.ToString("F2") + " / " + device.rxRate.ToString("F2") + " Mbps";
-            AirMaxQualityText.text = device.airMaxQuality.ToString("F0") + " %";
-            AirMaxCapacityText.text = device.airMaxCapacity.ToString("F0") + " %";
-
-            UpdateSignalBars(device.currentSignal);
-            UpdateSignalBarsPersenQuality(device.airMaxQuality);
-            UpdateSignalBarsPersenCapacity(device.airMaxCapacity);
-        }
-    }
-
     void Start()
-    { 
-        selectDevicePanel.SetActive(true);
-        loginPanel.SetActive(false);
-        mainUI.SetActive(false);
-        
-        // Daftarkan listener klik tombol scan manual secara dinamis
+    {
+        // UI ini tidak memilih device sendiri lagi.
+        // Device akan dikirim dari ComputerHomeUI setelah browser berhasil akses IP Nano.
+
+        SetPanel(selectDevicePanel, false);
+        SetPanel(loginPanel, false);
+        SetPanel(mainUI, false);
+        SetPanel(navbarPanel, false);
+        SetPanel(mainPanel, false);
+        SetPanel(wirelessPanel, false);
+        SetPanel(networkPanel, false);
+        SetPanel(systemPanel, false);
+
         if (scanButton != null)
         {
             scanButton.onClick.RemoveAllListeners();
             scanButton.onClick.AddListener(OnScanButtonClicked);
         }
-
-        StartScanLoop();
-    }
-
-    void InitDevice()
-    {
-        if (device == null) return;
-
-        LoadAllUIFromDevice();
-
-        // Bind UI Listeners dinamis
-        modeDropdown.onValueChanged.RemoveAllListeners();
-        modeDropdown.onValueChanged.AddListener(OnModeChanged);
-        modeDropdown.SetValueWithoutNotify((int)device.mode);
-
-        outputPowerSlider.onValueChanged.RemoveAllListeners();
-        outputPowerSlider.onValueChanged.AddListener(OnSliderChanged);
-
-        outputPowerText.onEndEdit.RemoveAllListeners();
-        outputPowerText.onEndEdit.AddListener(OnInputChanged);
-
-        nameDeviceInput.text = device.deviceName;
 
         if (agreeToggle != null)
         {
@@ -214,15 +182,91 @@ public class UI_WirelessDevice : MonoBehaviour
             OnToggleChanged(agreeToggle.isOn);
         }
 
-        SyncUI(outputPowerSlider.value);
+        // Tidak ada StartScanLoop() di sini.
+        // Select device sudah tidak dipakai untuk akses dari komputer.
+    }
+
+    void Update()
+    {
+        if (mainPanel != null && mainPanel.activeSelf && device != null)
+        {
+            if (signalStrengthText != null)
+                signalStrengthText.text = device.currentSignal.ToString("F2") + " dBm";
+
+            if (noiseFloorText != null)
+                noiseFloorText.text = device.noiseFloor.ToString("F2") + " dBm";
+
+            if (horizonalVerticalText != null)
+                horizonalVerticalText.text = device.horizontalSignal.ToString("F2") + " / " + device.verticalSignal.ToString("F2") + " dBm";
+
+            if (TXRXText != null)
+                TXRXText.text = device.txRate.ToString("F2") + " / " + device.rxRate.ToString("F2") + " Mbps";
+
+            if (AirMaxQualityText != null)
+                AirMaxQualityText.text = device.airMaxQuality.ToString("F0") + " %";
+
+            if (AirMaxCapacityText != null)
+                AirMaxCapacityText.text = device.airMaxCapacity.ToString("F0") + " %";
+
+            UpdateSignalBars(device.currentSignal);
+            UpdateSignalBarsPersenQuality(device.airMaxQuality);
+            UpdateSignalBarsPersenCapacity(device.airMaxCapacity);
+        }
+    }
+
+    void InitDevice()
+    {
+        if (device == null) return;
+
+        LoadAllUIFromDevice();
+
+        if (modeDropdown != null)
+        {
+            modeDropdown.onValueChanged.RemoveAllListeners();
+            modeDropdown.onValueChanged.AddListener(OnModeChanged);
+            modeDropdown.SetValueWithoutNotify((int)device.mode);
+        }
+
+        if (outputPowerSlider != null)
+        {
+            outputPowerSlider.onValueChanged.RemoveAllListeners();
+            outputPowerSlider.onValueChanged.AddListener(OnSliderChanged);
+        }
+
+        if (outputPowerText != null)
+        {
+            outputPowerText.onEndEdit.RemoveAllListeners();
+            outputPowerText.onEndEdit.AddListener(OnInputChanged);
+        }
+
+        if (nameDeviceInput != null)
+            nameDeviceInput.text = device.deviceName;
+
+        if (agreeToggle != null)
+        {
+            agreeToggle.onValueChanged.RemoveAllListeners();
+            agreeToggle.onValueChanged.AddListener(OnToggleChanged);
+            OnToggleChanged(agreeToggle.isOn);
+        }
+
+        if (outputPowerSlider != null)
+            SyncUI(outputPowerSlider.value);
+
         RefreshWirelessUI();
         RefreshNetworkUI();
         RefreshMainUI();
     }
 
+    private void SetPanel(GameObject panel, bool active)
+    {
+        if (panel != null)
+            panel.SetActive(active);
+    }
+
     void OnSliderChanged(float value)
     {
         if (isUpdating) return;
+
         isUpdating = true;
         SyncUI(value);
         isUpdating = false;
@@ -232,10 +276,11 @@ public class UI_WirelessDevice : MonoBehaviour
     {
         if (isUpdating) return;
 
-        float value;
-        if (float.TryParse(text, out value))
+        if (float.TryParse(text, out float value))
         {
-            value = Mathf.Clamp(value, outputPowerSlider.minValue, outputPowerSlider.maxValue);
+            if (outputPowerSlider != null)
+                value = Mathf.Clamp(value, outputPowerSlider.minValue, outputPowerSlider.maxValue);
+
             isUpdating = true;
             SyncUI(value);
             isUpdating = false;
@@ -244,15 +289,72 @@ public class UI_WirelessDevice : MonoBehaviour
 
     void SyncUI(float value)
     {
-        outputPowerSlider.value = value;
-        outputPowerText.text = value.ToString("F0");
+        if (outputPowerSlider != null)
+            outputPowerSlider.value = value;
+
+        if (outputPowerText != null)
+            outputPowerText.text = value.ToString("F0");
     }
     #endregion
- 
-    #region Device Management (List Canvas Pemilihan Hardware)
+
+    #region Open From Computer
+    public void OpenFromComputer(WirelessDevice targetDevice)
+    {
+        if (targetDevice == null)
+        {
+            Debug.LogWarning("Target Nano dari komputer kosong. UI Wireless tidak bisa dibuka.");
+            return;
+        }
+
+        // Stop semua scan pemilihan device lama.
+        if (scanRoutine != null)
+        {
+            StopCoroutine(scanRoutine);
+            scanRoutine = null;
+        }
+
+        StopAutoScan();
+
+        // Ini inti alur baru:
+        // device langsung menjadi Nano yang ditemukan dari browser komputer.
+        device = targetDevice;
+
+        SetPanel(selectDevicePanel, false);
+        SetPanel(navbarPanel, false);
+        SetPanel(mainUI, false);
+        SetPanel(mainPanel, false);
+        SetPanel(wirelessPanel, false);
+        SetPanel(networkPanel, false);
+        SetPanel(systemPanel, false);
+
+        SetPanel(loginPanel, true);
+
+        if (usernameInput != null)
+            usernameInput.text = "";
+
+        if (passwordInput != null)
+            passwordInput.text = "";
+
+        if (agreeToggle != null)
+        {
+            agreeToggle.isOn = false;
+            agreeToggle.onValueChanged.RemoveAllListeners();
+            agreeToggle.onValueChanged.AddListener(OnToggleChanged);
+            OnToggleChanged(false);
+        }
+
+        InitDevice();
+
+        Debug.Log("UI Nano dibuka langsung dari komputer untuk device: " + device.gameObject.name);
+    }
+    #endregion
+
+    #region Device Management Lama
     void StartScanLoop()
     {
-        if (scanRoutine != null) StopCoroutine(scanRoutine);
+        if (scanRoutine != null)
+            StopCoroutine(scanRoutine);
+
         scanRoutine = StartCoroutine(ScanLoop());
     }
 
@@ -267,22 +369,32 @@ public class UI_WirelessDevice : MonoBehaviour
 
     public void AddDeviceToUI(WirelessDevice d)
     {
+        if (d == null) return;
         if (foundDevices.Contains(d)) return;
+        if (deviceItemPrefab == null || deviceContainer == null) return;
+
         foundDevices.Add(d);
 
         GameObject item = Instantiate(deviceItemPrefab, deviceContainer);
         deviceItem ui = item.GetComponent<deviceItem>();
-        ui.Setup(d, this);
+
+        if (ui != null)
+            ui.Setup(d, this);
     }
 
     void ScanDevices()
     {
         foundDevices.Clear();
-        foreach (Transform child in deviceContainer)
-            Destroy(child.gameObject);
+
+        if (deviceContainer != null)
+        {
+            foreach (Transform child in deviceContainer)
+                Destroy(child.gameObject);
+        }
 
         WirelessDevice[] devices = FindObjectsOfType<WirelessDevice>();
-        foreach (var d in devices)
+
+        foreach (WirelessDevice d in devices)
         {
             AddDeviceToUI(d);
         }
@@ -290,9 +402,15 @@ public class UI_WirelessDevice : MonoBehaviour
 
     public void SelectDevice(WirelessDevice d)
     {
+        // Fungsi lama tetap dibiarkan supaya tidak merusak script deviceItem.
+        // Tapi alur utama sekarang pakai OpenFromComputer().
+        if (d == null) return;
+
         device = d;
-        selectDevicePanel.SetActive(false);
-        loginPanel.SetActive(true);
+
+        SetPanel(selectDevicePanel, false);
+        SetPanel(loginPanel, true);
+
         InitDevice();
     }
     #endregion
@@ -300,39 +418,65 @@ public class UI_WirelessDevice : MonoBehaviour
     #region Authentication
     public void Login()
     {
-        if (agreeToggle != null && !agreeToggle.isOn) return;
-
-        if (usernameInput.text == "ubnt" && passwordInput.text == "ubnt")
+        if (device == null)
         {
-            navbarPanel.SetActive(true);
-            loginPanel.SetActive(false);
-            mainUI.SetActive(true);
-             
-            usernameInput.text = "";
-            passwordInput.text = "";
-            agreeToggle.isOn = false;
+            Debug.LogWarning("Belum ada target Nano. Buka UI dari ComputerHomeUI dulu.");
+            return;
+        }
 
-            ShowMain();
+        if (agreeToggle != null && !agreeToggle.isOn)
+            return;
+
+        if (usernameInput != null && passwordInput != null)
+        {
+            if (usernameInput.text == "ubnt" && passwordInput.text == "ubnt")
+            {
+                SetPanel(navbarPanel, true);
+                SetPanel(loginPanel, false);
+                SetPanel(mainUI, true);
+
+                usernameInput.text = "";
+                passwordInput.text = "";
+
+                if (agreeToggle != null)
+                    agreeToggle.isOn = false;
+
+                ShowMain();
+            }
         }
     }
 
     public void Logout()
     {
-        StopAutoScan(); // Matikan loop scan wireless internal device saat logout
-        device = null;
+        StopAutoScan();
 
-        mainUI.SetActive(false);
-        navbarPanel.SetActive(false);
-        loginPanel.SetActive(false);
-        selectDevicePanel.SetActive(true);
+        // Jangan device = null.
+        // Supaya logout tetap kembali ke login Nano yang sama,
+        // bukan balik ke select device.
 
-        usernameInput.text = "";
-        passwordInput.text = "";
-        agreeToggle.isOn = false;
+        SetPanel(mainUI, false);
+        SetPanel(navbarPanel, false);
+        SetPanel(loginPanel, true);
+        SetPanel(selectDevicePanel, false);
 
-        StartScanLoop();
+        SetPanel(mainPanel, false);
+        SetPanel(wirelessPanel, false);
+        SetPanel(networkPanel, false);
+        SetPanel(systemPanel, false);
+
+        if (usernameInput != null)
+            usernameInput.text = "";
+
+        if (passwordInput != null)
+            passwordInput.text = "";
+
+        if (agreeToggle != null)
+        {
+            agreeToggle.isOn = false;
+            OnToggleChanged(false);
+        }
     }
-    
+
     void OnToggleChanged(bool state)
     {
         if (loginButton != null)
@@ -343,50 +487,71 @@ public class UI_WirelessDevice : MonoBehaviour
     #region UI Navigation
     public void ShowMain()
     {
-        mainPanel.SetActive(true);
-        wirelessPanel.SetActive(false);
-        networkPanel.SetActive(false);
-        systemPanel.SetActive(false);
+        if (device == null) return;
+
+        SetPanel(mainPanel, true);
+        SetPanel(wirelessPanel, false);
+        SetPanel(networkPanel, false);
+        SetPanel(systemPanel, false);
+
         SetActiveButton(mainBtn);
         RefreshMainUI();
     }
 
     public void ShowWireless()
     {
-        mainPanel.SetActive(false);
-        wirelessPanel.SetActive(true);
-        networkPanel.SetActive(false);
-        systemPanel.SetActive(false);
+        if (device == null) return;
+
+        SetPanel(mainPanel, false);
+        SetPanel(wirelessPanel, true);
+        SetPanel(networkPanel, false);
+        SetPanel(systemPanel, false);
+
         SetActiveButton(wirelessBtn);
         RefreshWirelessUI();
     }
 
     public void ShowNetwork()
     {
-        mainPanel.SetActive(false);
-        wirelessPanel.SetActive(false);
-        networkPanel.SetActive(true);
-        systemPanel.SetActive(false);
+        if (device == null) return;
+
+        SetPanel(mainPanel, false);
+        SetPanel(wirelessPanel, false);
+        SetPanel(networkPanel, true);
+        SetPanel(systemPanel, false);
+
         SetActiveButton(networkBtn);
         RefreshNetworkUI();
     }
 
     public void ShowSystem()
     {
-        mainPanel.SetActive(false);
-        wirelessPanel.SetActive(false);
-        networkPanel.SetActive(false);
-        systemPanel.SetActive(true);
+        if (device == null) return;
+
+        SetPanel(mainPanel, false);
+        SetPanel(wirelessPanel, false);
+        SetPanel(networkPanel, false);
+        SetPanel(systemPanel, true);
+
         SetActiveButton(systemBtn);
     }
 
     void SetActiveButton(Button activeBtn)
     {
-        mainBtn.image.color = warnaAwal;
-        wirelessBtn.image.color = warnaAwal;
-        networkBtn.image.color = warnaAwal;
-        systemBtn.image.color = warnaAwal;
-        activeBtn.image.color = Color.blue;
+        if (mainBtn != null && mainBtn.image != null)
+            mainBtn.image.color = warnaAwal;
+
+        if (wirelessBtn != null && wirelessBtn.image != null)
+            wirelessBtn.image.color = warnaAwal;
+
+        if (networkBtn != null && networkBtn.image != null)
+            networkBtn.image.color = warnaAwal;
+
+        if (systemBtn != null && systemBtn.image != null)
+            systemBtn.image.color = warnaAwal;
+
+        if (activeBtn != null && activeBtn.image != null)
+            activeBtn.image.color = Color.blue;
     }
     #endregion
 
@@ -394,87 +559,131 @@ public class UI_WirelessDevice : MonoBehaviour
     void RefreshMainUI()
     {
         if (device == null) return;
-        
-        deviceNameText.text = device.deviceName;
-        networkModeText.text = networkModeDropdown.options[networkModeDropdown.value].text;
-        wirelessModeText.text = device.WDS ? $"{device.mode} (WDS)" : device.mode.ToString();
-        SSIDText.text = device.ssid;
-        SecurityText.text = device.securityMode.ToString();
-        channelFrequencyText.text = device.frequency + " MHz";
-        channelWidthText.text = device.channelWidth.ToString();
-        frequencyBandText.text = device.GetFrequencyBand();
-        distanceText.text = device.CalculateDistance().ToString("F2") + " m";
-        TXPowerText.text = device.outputPower.ToString("F2") + " dBm";
-        wlan0MacText.text = device.wlan0Mac;
-        lan0MacText.text = device.lan0Mac;
-        lan1MacText.text = device.lan1Mac;
-        lan0dan1Text.text = device.lan0Status + " / " + device.lan1Status;
-        AIRMaxQuality.value = device.airMaxQuality;
-        AIRMaxCapacity.value = device.airMaxCapacity;
-        noiseFloorText.text = device.noiseFloor.ToString("F2") + " dBm";
-        transmitCCQText.text = device.transmitCCQ.ToString("F2") + " %";
+
+        if (deviceNameText != null)
+            deviceNameText.text = device.deviceName;
+
+        if (networkModeText != null && networkModeDropdown != null && networkModeDropdown.options.Count > networkModeDropdown.value)
+            networkModeText.text = networkModeDropdown.options[networkModeDropdown.value].text;
+
+        if (wirelessModeText != null)
+            wirelessModeText.text = device.WDS ? $"{device.mode} (WDS)" : device.mode.ToString();
+
+        if (SSIDText != null)
+            SSIDText.text = device.ssid;
+
+        if (SecurityText != null)
+            SecurityText.text = device.securityMode.ToString();
+
+        if (channelFrequencyText != null)
+            channelFrequencyText.text = device.frequency + " MHz";
+
+        if (channelWidthText != null)
+            channelWidthText.text = device.channelWidth.ToString();
+
+        if (frequencyBandText != null)
+            frequencyBandText.text = device.GetFrequencyBand();
+
+        if (distanceText != null)
+            distanceText.text = device.CalculateDistance().ToString("F2") + " m";
+
+        if (TXPowerText != null)
+            TXPowerText.text = device.outputPower.ToString("F2") + " dBm";
+
+        if (wlan0MacText != null)
+            wlan0MacText.text = device.wlan0Mac;
+
+        if (lan0MacText != null)
+            lan0MacText.text = device.lan0Mac;
+
+        if (lan1MacText != null)
+            lan1MacText.text = device.lan1Mac;
+
+        if (lan0dan1Text != null)
+            lan0dan1Text.text = device.lan0Status + " / " + device.lan1Status;
+
+        if (AIRMaxQuality != null)
+            AIRMaxQuality.value = device.airMaxQuality;
+
+        if (AIRMaxCapacity != null)
+            AIRMaxCapacity.value = device.airMaxCapacity;
+
+        if (noiseFloorText != null)
+            noiseFloorText.text = device.noiseFloor.ToString("F2") + " dBm";
+
+        if (transmitCCQText != null)
+            transmitCCQText.text = device.transmitCCQ.ToString("F2") + " %";
 
         if (device.mode == WirelessDevice.WirelessMode.AccessPoint)
         {
-            APMacText.text = device.GetAPMacAddress();
-            connectionText.text = device.GetConnectedStationsCount() + " Station(s)";
+            if (APMacText != null)
+                APMacText.text = device.GetAPMacAddress();
+
+            if (connectionText != null)
+                connectionText.text = device.GetConnectedStationsCount() + " Station(s)";
         }
         else
         {
-            signalStrengthText.text = device.currentSignal.ToString("F2") + " dBm";
-            horizonalVerticalText.text = device.horizontalSignal.ToString("F2") + " / " + device.verticalSignal.ToString("F2") + " dBm";
-            TXRXText.text = device.txRate.ToString("F2") + " / " + device.rxRate.ToString("F2") + " Mbps";
+            if (signalStrengthText != null)
+                signalStrengthText.text = device.currentSignal.ToString("F2") + " dBm";
+
+            if (horizonalVerticalText != null)
+                horizonalVerticalText.text = device.horizontalSignal.ToString("F2") + " / " + device.verticalSignal.ToString("F2") + " dBm";
+
+            if (TXRXText != null)
+                TXRXText.text = device.txRate.ToString("F2") + " / " + device.rxRate.ToString("F2") + " Mbps";
         }
     }
 
     public void UpdateSignalBars(float currentDbm)
     {
         if (signalBars == null || signalBars.Length == 0) return;
+
         int activeBars = 0;
 
-        if (currentDbm >= -45f) activeBars = 10;      
-        else if (currentDbm >= -50f) activeBars = 9;  
-        else if (currentDbm >= -55f) activeBars = 8;  
-        else if (currentDbm >= -60f) activeBars = 7;  
-        else if (currentDbm >= -65f) activeBars = 6;  
-        else if (currentDbm >= -70f) activeBars = 5;  
-        else if (currentDbm >= -75f) activeBars = 4;  
-        else if (currentDbm >= -80f) activeBars = 3;  
-        else if (currentDbm >= -85f) activeBars = 2;  
-        else if (currentDbm >= -90f) activeBars = 1;  
-        else activeBars = 0;                                          
+        if (currentDbm >= -45f) activeBars = 10;
+        else if (currentDbm >= -50f) activeBars = 9;
+        else if (currentDbm >= -55f) activeBars = 8;
+        else if (currentDbm >= -60f) activeBars = 7;
+        else if (currentDbm >= -65f) activeBars = 6;
+        else if (currentDbm >= -70f) activeBars = 5;
+        else if (currentDbm >= -75f) activeBars = 4;
+        else if (currentDbm >= -80f) activeBars = 3;
+        else if (currentDbm >= -85f) activeBars = 2;
+        else if (currentDbm >= -90f) activeBars = 1;
+        else activeBars = 0;
 
-        Color currentColor = (activeBars <= 3) ? weakColor : (activeBars <= 6) ? fairColor : strongColor;
+        Color currentColor = activeBars <= 3 ? weakColor : activeBars <= 6 ? fairColor : strongColor;
 
         for (int i = 0; i < signalBars.Length; i++)
         {
-            signalBars[i].color = (i < activeBars) ? currentColor : offColor;
+            signalBars[i].color = i < activeBars ? currentColor : offColor;
         }
     }
-    
+
     public void UpdateSignalBarsPersenQuality(float currentSignalPersen)
     {
         if (signalBarsPersenQuality == null || signalBarsPersenQuality.Length == 0) return;
-        int activeBars = Mathf.Clamp((int)(currentSignalPersen / 10f), 0, 10);
 
-        Color currentColor = (activeBars <= 3) ? weakColor : (activeBars <= 6) ? fairColor : strongColor;
+        int activeBars = Mathf.Clamp((int)(currentSignalPersen / 10f), 0, 10);
+        Color currentColor = activeBars <= 3 ? weakColor : activeBars <= 6 ? fairColor : strongColor;
 
         for (int i = 0; i < signalBarsPersenQuality.Length; i++)
         {
-            signalBarsPersenQuality[i].color = (i < activeBars) ? currentColor : offColor;
+            signalBarsPersenQuality[i].color = i < activeBars ? currentColor : offColor;
         }
     }
 
     public void UpdateSignalBarsPersenCapacity(float currentSignalPersen)
     {
         if (signalBarsPersenCapacity == null || signalBarsPersenCapacity.Length == 0) return;
-        int activeBars = Mathf.Clamp((int)(currentSignalPersen / 10f), 0, 10);
 
-        Color currentColor = (activeBars <= 3) ? weakColor : (activeBars <= 6) ? fairColor : strongColor;
+        int activeBars = Mathf.Clamp((int)(currentSignalPersen / 10f), 0, 10);
+        Color currentColor = activeBars <= 3 ? weakColor : activeBars <= 6 ? fairColor : strongColor;
 
         for (int i = 0; i < signalBarsPersenCapacity.Length; i++)
         {
-            signalBarsPersenCapacity[i].color = (i < activeBars) ? currentColor : offColor;
+            signalBarsPersenCapacity[i].color = i < activeBars ? currentColor : offColor;
         }
     }
 
@@ -485,7 +694,6 @@ public class UI_WirelessDevice : MonoBehaviour
         bool isAP = device.mode == WirelessDevice.WirelessMode.AccessPoint;
         bool isStation = device.mode == WirelessDevice.WirelessMode.Station;
 
-        // Common Elements
         if (WDSToggle != null) WDSToggle.gameObject.SetActive(true);
         if (countryCodeDropdown != null) countryCodeDropdown.gameObject.SetActive(true);
         if (IEE80211Dropdown != null) IEE80211Dropdown.gameObject.SetActive(true);
@@ -498,7 +706,6 @@ public class UI_WirelessDevice : MonoBehaviour
         if (securityDropdown != null) securityDropdown.gameObject.SetActive(true);
         if (changeButton != null) changeButton.gameObject.SetActive(true);
 
-        // AP Mode Only Elements
         if (SSIDInput != null) SSIDInput.gameObject.SetActive(isAP);
         if (frequencyDropdownText != null) frequencyDropdownText.gameObject.SetActive(isAP);
         if (frequencyDropdown != null) frequencyDropdown.gameObject.SetActive(isAP);
@@ -507,7 +714,6 @@ public class UI_WirelessDevice : MonoBehaviour
         if (calculateEIRPToggle != null) calculateEIRPToggle.gameObject.SetActive(isAP);
         if (calculateEIRPToggleText != null) calculateEIRPToggleText.gameObject.SetActive(isAP);
 
-        // Station Mode Only Elements
         if (networkDropdown != null) networkDropdown.gameObject.SetActive(isStation);
         if (lockToAPInput != null) lockToAPInput.gameObject.SetActive(isStation);
         if (lockToAPInputText != null) lockToAPInputText.gameObject.SetActive(isStation);
@@ -522,14 +728,29 @@ public class UI_WirelessDevice : MonoBehaviour
     {
         if (device == null) return;
 
-        networkModeDropdown.value = (int)device.networkMode;
-        disableNetworkDropdown.value = device.disableNetwork ? 1 : 0;
-        ipAddressInput.text = device.ipAddress;
-        netmaskInput.text = device.netmask;
-        gatewayInput.text = device.gateway;
-        primaryDNSInput.text = device.primaryDNS;
-        secondaryDNSInput.text = device.secondaryDNS;
-        mtuInput.text = device.mtu.ToString();
+        if (networkModeDropdown != null)
+            networkModeDropdown.value = (int)device.networkMode;
+
+        if (disableNetworkDropdown != null)
+            disableNetworkDropdown.value = device.disableNetwork ? 1 : 0;
+
+        if (ipAddressInput != null)
+            ipAddressInput.text = device.ipAddress;
+
+        if (netmaskInput != null)
+            netmaskInput.text = device.netmask;
+
+        if (gatewayInput != null)
+            gatewayInput.text = device.gateway;
+
+        if (primaryDNSInput != null)
+            primaryDNSInput.text = device.primaryDNS;
+
+        if (secondaryDNSInput != null)
+            secondaryDNSInput.text = device.secondaryDNS;
+
+        if (mtuInput != null)
+            mtuInput.text = device.mtu.ToString();
     }
     #endregion
 
@@ -538,56 +759,103 @@ public class UI_WirelessDevice : MonoBehaviour
     {
         if (device == null) return;
 
-        modeDropdown.SetValueWithoutNotify((int)device.mode);
-        SSIDInput.text = device.ssid;
-        IEE80211Dropdown.SetValueWithoutNotify((int)device.ieee80211Mode);
-        channelWidthDropdown.SetValueWithoutNotify((int)device.channelWidth);
-        channelShiftDropdown.SetValueWithoutNotify((int)device.channelShift);
+        if (modeDropdown != null)
+            modeDropdown.SetValueWithoutNotify((int)device.mode);
 
-        antennaGainInput.text = device.antennaGain.ToString("F0");
-        outputPowerSlider.value = device.outputPower;
-        outputPowerText.text = device.outputPower.ToString("F0");
+        if (SSIDInput != null)
+            SSIDInput.text = device.ssid;
 
-        WDSToggle.isOn = device.WDS;
-        freqScanToggle.isOn = device.freqScan;
-        calculateEIRPToggle.isOn = device.calculateEIRP;
-        autoEIRPToggle.isOn = device.autoEIRP;
+        if (IEE80211Dropdown != null)
+            IEE80211Dropdown.SetValueWithoutNotify((int)device.ieee80211Mode);
 
-        dataRateModuleDropdown.SetValueWithoutNotify((int)device.dataRateModule);
-        maxTXRateDropdown.SetValueWithoutNotify((int)device.maxTXRate);
-        autoMaxTXRateToggle.isOn = device.autoMaxTXRate;
+        if (channelWidthDropdown != null)
+            channelWidthDropdown.SetValueWithoutNotify((int)device.channelWidth);
 
-        securityDropdown.SetValueWithoutNotify((int)device.securityMode);
-        WPAAuthDropdown.SetValueWithoutNotify((int)device.wpaAuthMode);
-        passwordTMP_InputField.text = device.password;
+        if (channelShiftDropdown != null)
+            channelShiftDropdown.SetValueWithoutNotify((int)device.channelShift);
 
-        lockToAPInput.text = device.lockToAPSSID;
+        if (antennaGainInput != null)
+            antennaGainInput.text = device.antennaGain.ToString("F0");
 
-        networkModeDropdown.SetValueWithoutNotify((int)device.networkMode);
-        disableNetworkDropdown.SetValueWithoutNotify(device.disableNetwork ? 1 : 0);
-        ipAddressInput.text = device.ipAddress;
-        netmaskInput.text = device.netmask;
-        gatewayInput.text = device.gateway;
-        primaryDNSInput.text = device.primaryDNS;
-        secondaryDNSInput.text = device.secondaryDNS;
-        mtuInput.text = device.mtu.ToString();
+        if (outputPowerSlider != null)
+            outputPowerSlider.value = device.outputPower;
 
-        nameDeviceInput.text = device.deviceName;
+        if (outputPowerText != null)
+            outputPowerText.text = device.outputPower.ToString("F0");
+
+        if (WDSToggle != null)
+            WDSToggle.isOn = device.WDS;
+
+        if (freqScanToggle != null)
+            freqScanToggle.isOn = device.freqScan;
+
+        if (calculateEIRPToggle != null)
+            calculateEIRPToggle.isOn = device.calculateEIRP;
+
+        if (autoEIRPToggle != null)
+            autoEIRPToggle.isOn = device.autoEIRP;
+
+        if (dataRateModuleDropdown != null)
+            dataRateModuleDropdown.SetValueWithoutNotify((int)device.dataRateModule);
+
+        if (maxTXRateDropdown != null)
+            maxTXRateDropdown.SetValueWithoutNotify((int)device.maxTXRate);
+
+        if (autoMaxTXRateToggle != null)
+            autoMaxTXRateToggle.isOn = device.autoMaxTXRate;
+
+        if (securityDropdown != null)
+            securityDropdown.SetValueWithoutNotify((int)device.securityMode);
+
+        if (WPAAuthDropdown != null)
+            WPAAuthDropdown.SetValueWithoutNotify((int)device.wpaAuthMode);
+
+        if (passwordTMP_InputField != null)
+            passwordTMP_InputField.text = device.password;
+
+        if (lockToAPInput != null)
+            lockToAPInput.text = device.lockToAPSSID;
+
+        if (networkModeDropdown != null)
+            networkModeDropdown.SetValueWithoutNotify((int)device.networkMode);
+
+        if (disableNetworkDropdown != null)
+            disableNetworkDropdown.SetValueWithoutNotify(device.disableNetwork ? 1 : 0);
+
+        if (ipAddressInput != null)
+            ipAddressInput.text = device.ipAddress;
+
+        if (netmaskInput != null)
+            netmaskInput.text = device.netmask;
+
+        if (gatewayInput != null)
+            gatewayInput.text = device.gateway;
+
+        if (primaryDNSInput != null)
+            primaryDNSInput.text = device.primaryDNS;
+
+        if (secondaryDNSInput != null)
+            secondaryDNSInput.text = device.secondaryDNS;
+
+        if (mtuInput != null)
+            mtuInput.text = device.mtu.ToString();
+
+        if (nameDeviceInput != null)
+            nameDeviceInput.text = device.deviceName;
     }
 
     void OnModeChanged(int value)
     {
+        if (device == null) return;
+
         device.SetMode(value);
 
-        // Matikan total autoscan loop lama jika ada pergantian mode mendadak
-        StopAutoScan(); 
+        StopAutoScan();
 
         RefreshWirelessUI();
         RefreshNetworkUI();
         RefreshMainUI();
 
-        // 🔥 PERBAIKAN: Ketika pindah ke mode Station, daftar pilihan di-clear 
-        // dan nunggu klik manual tombol scan (tidak otomatis panggil StartAutoScan)
         if (device.mode == WirelessDevice.WirelessMode.Station)
         {
             if (networkDropdown != null)
@@ -599,54 +867,55 @@ public class UI_WirelessDevice : MonoBehaviour
         }
     }
 
-    // Fungsi trigger handler saat tombol Scan di-klik manual oleh user
     void OnScanButtonClicked()
     {
         if (device == null || device.mode != WirelessDevice.WirelessMode.Station) return;
-        
-        // Panggil fungsi scanning pertama kali
-        Scan(); 
-        
-        // Aktifkan auto loop penyegaran daftar AP per 2 detik (Realtime Environment)
-        StartAutoScan(); 
+
+        Scan();
+        StartAutoScan();
     }
 
     public void OnSecurityModeChanged(int dropdownIndex)
     {
-        int securityModeIndex = securityDropdown.value;
-        bool isSecure = (securityModeIndex == 1); // WPA2_AES
+        if (securityDropdown == null) return;
 
-        WPAAuthDropdownText.gameObject.SetActive(isSecure);
-        WPAttk2.gameObject.SetActive(isSecure);
-        WPAAuthDropdown.gameObject.SetActive(isSecure);
+        int securityModeIndex = securityDropdown.value;
+        bool isSecure = securityModeIndex == 1;
+
+        if (WPAAuthDropdownText != null) WPAAuthDropdownText.gameObject.SetActive(isSecure);
+        if (WPAttk2 != null) WPAttk2.gameObject.SetActive(isSecure);
+        if (WPAAuthDropdown != null) WPAAuthDropdown.gameObject.SetActive(isSecure);
 
         if (!isSecure)
         {
-            passwordText.gameObject.SetActive(false);
-            Passttk2.gameObject.SetActive(false);
-            passwordTMP_InputField.gameObject.SetActive(false);
+            if (passwordText != null) passwordText.gameObject.SetActive(false);
+            if (Passttk2 != null) Passttk2.gameObject.SetActive(false);
+            if (passwordTMP_InputField != null) passwordTMP_InputField.gameObject.SetActive(false);
         }
     }
 
     public void OnWPAAuthModeChanged(int dropdownIndex)
     {
-        int wpaAuthModeIndex = WPAAuthDropdown.value;
-        bool isPSK = (wpaAuthModeIndex == 1); // PSK
+        if (WPAAuthDropdown == null) return;
 
-        passwordText.gameObject.SetActive(isPSK);
-        Passttk2.gameObject.SetActive(isPSK);
-        passwordTMP_InputField.gameObject.SetActive(isPSK);
+        int wpaAuthModeIndex = WPAAuthDropdown.value;
+        bool isPSK = wpaAuthModeIndex == 1;
+
+        if (passwordText != null) passwordText.gameObject.SetActive(isPSK);
+        if (Passttk2 != null) Passttk2.gameObject.SetActive(isPSK);
+        if (passwordTMP_InputField != null) passwordTMP_InputField.gameObject.SetActive(isPSK);
     }
 
     public void Connect()
     {
+        if (device == null) return;
         if (scanned.Count == 0 || networkDropdown == null) return;
 
         int index = networkDropdown.value;
         if (index < 0 || index >= scanned.Count) return;
 
-        var ap = scanned[index];
-        device.Connect(ap, passwordTMP_InputField.text);
+        WirelessDevice ap = scanned[index];
+        device.Connect(ap, passwordTMP_InputField != null ? passwordTMP_InputField.text : "");
 
         RefreshWirelessUI();
         RefreshMainUI();
@@ -655,12 +924,13 @@ public class UI_WirelessDevice : MonoBehaviour
     public void Scan()
     {
         scanned.Clear();
+
         if (networkDropdown == null || device == null) return;
 
         networkDropdown.ClearOptions();
         List<string> options = new List<string>();
 
-        foreach (var ap in NetworksRegistry.activeAPs)
+        foreach (WirelessDevice ap in NetworksRegistry.activeAPs)
         {
             if (ap == device) continue;
 
@@ -681,39 +951,76 @@ public class UI_WirelessDevice : MonoBehaviour
     {
         if (device == null) return;
 
-        device.WDS = WDSToggle.isOn;
-        device.countryCode = countryCodeDropdown.options[countryCodeDropdown.value].text;
-        device.ieee80211Mode = (WirelessDevice.IEEE80211Mode)IEE80211Dropdown.value;
-        device.channelWidth = (WirelessDevice.ChannelWidth)channelWidthDropdown.value;
-        device.freqScan = freqScanToggle.isOn;
-        device.antennaGain = float.Parse(antennaGainInput.text);
-        device.outputPower = outputPowerSlider.value;
-        device.dataRateModule = (WirelessDevice.DataRateModule)dataRateModuleDropdown.value;
-        device.maxTXRate = (WirelessDevice.MaxTXRate)maxTXRateDropdown.value;
-        device.autoMaxTXRate = autoMaxTXRateToggle.isOn;
-        device.securityMode = (WirelessDevice.SecurityMode)securityDropdown.value;
-        device.wpaAuthMode = (WirelessDevice.WPAAuthMode)WPAAuthDropdown.value;
-        device.password = passwordTMP_InputField.text;
+        if (WDSToggle != null)
+            device.WDS = WDSToggle.isOn;
+
+        if (countryCodeDropdown != null && countryCodeDropdown.options.Count > countryCodeDropdown.value)
+            device.countryCode = countryCodeDropdown.options[countryCodeDropdown.value].text;
+
+        if (IEE80211Dropdown != null)
+            device.ieee80211Mode = (WirelessDevice.IEEE80211Mode)IEE80211Dropdown.value;
+
+        if (channelWidthDropdown != null)
+            device.channelWidth = (WirelessDevice.ChannelWidth)channelWidthDropdown.value;
+
+        if (freqScanToggle != null)
+            device.freqScan = freqScanToggle.isOn;
+
+        if (antennaGainInput != null && float.TryParse(antennaGainInput.text, out float antennaGain))
+            device.antennaGain = antennaGain;
+
+        if (outputPowerSlider != null)
+            device.outputPower = outputPowerSlider.value;
+
+        if (dataRateModuleDropdown != null)
+            device.dataRateModule = (WirelessDevice.DataRateModule)dataRateModuleDropdown.value;
+
+        if (maxTXRateDropdown != null)
+            device.maxTXRate = (WirelessDevice.MaxTXRate)maxTXRateDropdown.value;
+
+        if (autoMaxTXRateToggle != null)
+            device.autoMaxTXRate = autoMaxTXRateToggle.isOn;
+
+        if (securityDropdown != null)
+            device.securityMode = (WirelessDevice.SecurityMode)securityDropdown.value;
+
+        if (WPAAuthDropdown != null)
+            device.wpaAuthMode = (WirelessDevice.WPAAuthMode)WPAAuthDropdown.value;
+
+        if (passwordTMP_InputField != null)
+            device.password = passwordTMP_InputField.text;
 
         if (device.mode == WirelessDevice.WirelessMode.AccessPoint)
         {
-            device.ssid = SSIDInput.text;
-            device.frequency = frequencyDropdown.value == 0 ? 2412f : 5180f;
-            device.extensionChannel = (WirelessDevice.ExtensionChannel)extensionChannelDropdown.value;
-            device.calculateEIRP = calculateEIRPToggle.isOn;
+            if (SSIDInput != null)
+                device.ssid = SSIDInput.text;
+
+            if (frequencyDropdown != null)
+                device.frequency = frequencyDropdown.value == 0 ? 2412f : 5180f;
+
+            if (extensionChannelDropdown != null)
+                device.extensionChannel = (WirelessDevice.ExtensionChannel)extensionChannelDropdown.value;
+
+            if (calculateEIRPToggle != null)
+                device.calculateEIRP = calculateEIRPToggle.isOn;
         }
         else
         {
-            device.lockToAPSSID = lockToAPInput.text;
-            device.channelShift = (WirelessDevice.ChannelShift)channelShiftDropdown.value;
-            device.autoEIRP = autoEIRPToggle.isOn;
-            
-            // Validasi split data dropdown hasil scan secara aman
-            if (scanned.Count > 0 && networkDropdown.value < scanned.Count)
+            if (lockToAPInput != null)
+                device.lockToAPSSID = lockToAPInput.text;
+
+            if (channelShiftDropdown != null)
+                device.channelShift = (WirelessDevice.ChannelShift)channelShiftDropdown.value;
+
+            if (autoEIRPToggle != null)
+                device.autoEIRP = autoEIRPToggle.isOn;
+
+            if (scanned.Count > 0 && networkDropdown != null && networkDropdown.value < scanned.Count)
             {
                 device.ssid = scanned[networkDropdown.value].ssid;
             }
         }
+
         RefreshWirelessUI();
         RefreshMainUI();
         Connect();
@@ -723,25 +1030,38 @@ public class UI_WirelessDevice : MonoBehaviour
     {
         if (device == null) return;
 
-        device.ipAddress = ipAddressInput.text;
-        device.netmask = netmaskInput.text;
-        device.gateway = gatewayInput.text;
-        device.primaryDNS = primaryDNSInput.text;
-        device.secondaryDNS = secondaryDNSInput.text;
-        
-        if (int.TryParse(mtuInput.text, out int mtu))
-        {
+        if (ipAddressInput != null)
+            device.ipAddress = ipAddressInput.text;
+
+        if (netmaskInput != null)
+            device.netmask = netmaskInput.text;
+
+        if (gatewayInput != null)
+            device.gateway = gatewayInput.text;
+
+        if (primaryDNSInput != null)
+            device.primaryDNS = primaryDNSInput.text;
+
+        if (secondaryDNSInput != null)
+            device.secondaryDNS = secondaryDNSInput.text;
+
+        if (mtuInput != null && int.TryParse(mtuInput.text, out int mtu))
             device.mtu = mtu;
-        }
+
         RefreshNetworkUI();
+        RefreshMainUI();
     }
 
     public void changeSystem()
     {
         if (device == null) return;
 
-        device.SetDeviceName(nameDeviceInput.text);
-        nameDeviceInput.text = device.deviceName;
+        if (nameDeviceInput != null)
+        {
+            device.SetDeviceName(nameDeviceInput.text);
+            nameDeviceInput.text = device.deviceName;
+        }
+
         RefreshMainUI();
     }
     #endregion

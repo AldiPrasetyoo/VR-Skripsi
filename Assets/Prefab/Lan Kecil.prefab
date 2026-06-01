@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6923006999993247335}
   - component: {fileID: 872368656460023247}
   - component: {fileID: 3649517418067159084}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -126,7 +126,7 @@ GameObject:
   - component: {fileID: 4488456561363411616}
   - component: {fileID: 2128191803370778223}
   - component: {fileID: 408326559905959679}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Start
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -415,7 +415,7 @@ GameObject:
   - component: {fileID: 2013849713528041914}
   - component: {fileID: 7562370191346280124}
   - component: {fileID: 4414608413346246981}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Main
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -504,7 +504,7 @@ GameObject:
   - component: {fileID: 4249655160390095428}
   - component: {fileID: 8393082975359426976}
   - component: {fileID: 1177406468728925069}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Color
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -593,7 +593,7 @@ GameObject:
   - component: {fileID: 1528367203738055805}
   - component: {fileID: 2447397471277092816}
   - component: {fileID: 4064997134358103095}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Cylidner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -681,7 +681,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5991215779526409311}
   - component: {fileID: 5689424995485773498}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: CableContactMale
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -740,7 +740,7 @@ GameObject:
   - component: {fileID: 4037078560945459480}
   - component: {fileID: 3916783304991424133}
   - component: {fileID: 7287523662764742147}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: End
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1029,7 +1029,7 @@ GameObject:
   - component: {fileID: 2446409033271674735}
   - component: {fileID: 5937503018379450786}
   - component: {fileID: 5564417558395216638}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Color
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1116,7 +1116,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4442664073245155554}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Part_1_Conn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1148,7 +1148,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4186952989604388989}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: male
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1189,7 +1189,7 @@ GameObject:
   - component: {fileID: 6140817433664502162}
   - component: {fileID: 4278996496728693303}
   - component: {fileID: 9141073452177861323}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Point0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1375,7 +1375,7 @@ GameObject:
   - component: {fileID: 5882263412353793124}
   - component: {fileID: 5608973954614383256}
   - component: {fileID: 5310225174279359527}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1485,7 +1485,7 @@ GameObject:
   - component: {fileID: 1856017761641480782}
   - component: {fileID: 1068088074605253138}
   - component: {fileID: 8487256989625946374}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Cylidner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1574,7 +1574,7 @@ GameObject:
   - component: {fileID: 6585067168462645866}
   - component: {fileID: 6391372587451050160}
   - component: {fileID: 1387847035883317630}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Kabel RJ45
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1670,7 +1670,7 @@ GameObject:
   - component: {fileID: 5369525361840323741}
   - component: {fileID: 3079962551314475155}
   - component: {fileID: 2981911598276502761}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Cylidner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1759,7 +1759,7 @@ GameObject:
   - component: {fileID: 14268105266676329}
   - component: {fileID: 1877040563241047441}
   - component: {fileID: 1574678610691552130}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Kabel RJ45
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1853,7 +1853,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7780315310208034683}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Connector0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1885,7 +1885,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 755586520674108324}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: male
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1921,7 +1921,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4369908166432353216}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Rotasi
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1954,7 +1954,7 @@ GameObject:
   - component: {fileID: 4142302634749816719}
   - component: {fileID: 1578731890805655445}
   - component: {fileID: 1259154887097937413}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Joints
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2043,7 +2043,7 @@ GameObject:
   - component: {fileID: 8750715187887119481}
   - component: {fileID: 4545161483941667964}
   - component: {fileID: 3343438113748895137}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Joints
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2130,7 +2130,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6964116533474635045}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: ConnectionPosition
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2163,7 +2163,7 @@ GameObject:
   - component: {fileID: 4554646141211961481}
   - component: {fileID: 8000538056223635173}
   - component: {fileID: 2324081507766219248}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Main
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2250,7 +2250,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6107614666297670000}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: ConnectionPosition
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2283,7 +2283,7 @@ GameObject:
   - component: {fileID: 6209047639778727862}
   - component: {fileID: 2037006141339643062}
   - component: {fileID: 2558192276369040013}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Lan Kecil
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2368,7 +2368,7 @@ GameObject:
   - component: {fileID: 8000217217227209694}
   - component: {fileID: 7424175223181708625}
   - component: {fileID: 865627252401638771}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Cylidner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2456,7 +2456,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4203141613610392414}
   - component: {fileID: 289233876889428121}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: CableContactMale
   m_TagString: Untagged
   m_Icon: {fileID: 0}
