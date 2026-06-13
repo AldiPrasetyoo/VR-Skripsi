@@ -11,14 +11,21 @@ public class MinimapFollowPlayer : MonoBehaviour
     [Header("Ikuti Rotasi Y Player")]
     public bool rotateWithPlayer = false;
 
+    [Header("Offset Geser Map dari Tombol")]
+    public Vector3 mapOffset = Vector3.zero;
+
+    [Header("Batas Geser Map")]
+    public float maxOffsetX = 40f;
+    public float maxOffsetZ = 40f;
+
     private void LateUpdate()
     {
         if (target == null) return;
 
         transform.position = new Vector3(
-            target.position.x,
+            target.position.x + mapOffset.x,
             target.position.y + height,
-            target.position.z
+            target.position.z + mapOffset.z
         );
 
         if (rotateWithPlayer)
@@ -29,5 +36,18 @@ public class MinimapFollowPlayer : MonoBehaviour
         {
             transform.rotation = Quaternion.Euler(90f, 0f, 0f);
         }
+    }
+
+    public void AddOffset(Vector3 offset)
+    {
+        mapOffset += offset;
+
+        mapOffset.x = Mathf.Clamp(mapOffset.x, -maxOffsetX, maxOffsetX);
+        mapOffset.z = Mathf.Clamp(mapOffset.z, -maxOffsetZ, maxOffsetZ);
+    }
+
+    public void ResetOffset()
+    {
+        mapOffset = Vector3.zero;
     }
 }

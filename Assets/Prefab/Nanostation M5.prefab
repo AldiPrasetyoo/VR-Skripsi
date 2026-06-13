@@ -246,7 +246,7 @@ Transform:
   m_LocalRotation: {x: -0.74524915, y: 0, z: 0, w: 0.6667862}
   m_LocalPosition: {x: -2.877, y: 1.543, z: -1.463}
   m_LocalScale: {x: 0.8599998, y: 0.17356867, z: 0.7646516}
-  m_ConstrainProportionsScale: 1
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6211373110546299995}
   - {fileID: 2435035350721439745}
@@ -376,7 +376,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   m_InteractionLayers:
-    m_Bits: 1
+    m_Bits: 4
   m_DistanceCalculationMode: 1
   m_SelectMode: 0
   m_FocusMode: 1

@@ -69,31 +69,31 @@ public class VROrientationCinematic : MonoBehaviour
         }
         else if (time >= 12f && time < 17f)
         {
-            subtitleText.text = "Masalah yang harus diselesaikan adalah menghubungkan jaringan dari Gedung 1 ke Gedung 2.";
+            subtitleText.text = "Permasalahan yang harus diselesaikan adalah menghubungkan jaringan dari Gedung 1 ke Gedung 2.";
         }
         else if (time >= 17f && time < 22f)
         {
-            subtitleText.text = "Untuk membangun koneksi antar gedung, diperlukan perangkat NanoStation dengan konsep point to point.";
+            subtitleText.text = "Untuk membantu penyelesaian masalah, tersedia beberapa perangkat yang dapat digunakan dalam jaringan point to point.";
         }
         else if (time >= 22f && time < 27f)
         {
-            subtitleText.text = "Perangkat NanoStation harus dipasang pada tower dan mendapatkan sumber daya melalui PoE.";
+            subtitleText.text = "Perangkat dan perlengkapan yang dibutuhkan dapat ditemukan pada area kerja yang telah disediakan.";
         }
         else if (time >= 27f && time < 33f)
         {
-            subtitleText.text = "Gedung pusat perlu dikonfigurasi sebagai Access Point, sedangkan gedung cabang dikonfigurasi sebagai Station.";
+            subtitleText.text = "Setiap perangkat perlu dipasang dan dikonfigurasi sesuai kebutuhan agar komunikasi antar gedung dapat berlangsung.";
         }
         else if (time >= 33f && time < 38f)
         {
-            subtitleText.text = "Selain pemasangan perangkat, konfigurasi IP Address, SSID, keamanan wireless, dan kabel LAN harus dilakukan dengan benar.";
+            subtitleText.text = "Amati kondisi lingkungan, perangkat, dan hasil konfigurasi untuk menemukan solusi yang tepat.";
         }
         else if (time >= 38f && time < 43f)
         {
-            subtitleText.text = "Keberhasilan jaringan akan diuji melalui koneksi perangkat client di ruang komputer.";
+            subtitleText.text = "Keberhasilan jaringan dapat diuji melalui perangkat client yang berada di ruang komputer Gedung 2.";
         }
         else if (time >= 43f && time < 48f)
         {
-            subtitleText.text = "Tugas Anda adalah menyelesaikan masalah jaringan hingga Gedung 2 berhasil terhubung ke internet.";
+            subtitleText.text = "Keberhasilan pekerjaan ditentukan ketika perangkat client di Gedung 2 dapat terhubung dan mengakses jaringan dengan baik.";
         }
         else
         {
