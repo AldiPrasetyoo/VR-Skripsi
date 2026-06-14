@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class ComputerHomeUI : MonoBehaviour
@@ -13,6 +14,30 @@ public class ComputerHomeUI : MonoBehaviour
     public GameObject ipPanel;
     public GameObject pingPanel;
     public GameObject browserPanel;
+
+    // ================= SIMPLE NETWORK STATUS =================
+    [Header("Simple Network Status")]
+    public TMP_Text connectionStatusText;
+    public Image connectionIcon;
+
+    [Header("Network Icon Sprite")]
+    public Sprite iconDisconnected;
+    public Sprite iconLanConnected;
+    public Sprite iconConnected;
+    public Sprite iconWarning;
+
+    [Header("Network Status Color")]
+    public Color connectedColor = Color.green;
+    public Color warningColor = new Color(1f, 0.65f, 0f);
+    public Color disconnectedColor = Color.red;
+    public Color normalColor = Color.white;
+
+    [Header("Network Status Setting")]
+    public string defaultNanoIP = "192.168.1.20";
+    public bool autoUpdateNetworkStatus = true;
+    public float networkStatusRefreshRate = 0.25f;
+
+    private float networkStatusTimer;
 
     // ================= IP CONFIG UI =================
     [Header("IP Config UI")]
@@ -52,57 +77,77 @@ public class ComputerHomeUI : MonoBehaviour
 
         if (pingTargetInput != null && string.IsNullOrWhiteSpace(pingTargetInput.text))
         {
-            pingTargetInput.text = "192.168.1.20";
+            pingTargetInput.text = defaultNanoIP;
         }
 
         if (addressInput != null && string.IsNullOrWhiteSpace(addressInput.text))
         {
-            addressInput.text = "192.168.1.20";
+            addressInput.text = defaultNanoIP;
         }
 
         HideBrowserResults();
+        UpdateNetworkStatus();
+    }
+
+    private void Update()
+    {
+        if (!autoUpdateNetworkStatus) return;
+
+        networkStatusTimer += Time.deltaTime;
+
+        if (networkStatusTimer >= networkStatusRefreshRate)
+        {
+            networkStatusTimer = 0f;
+            UpdateNetworkStatus();
+        }
     }
 
     // ================= PANEL NAVIGATION =================
 
     public void ShowHome()
     {
-        SetPanel(Header,true);
+        SetPanel(Header, true);
         SetPanel(homePanel, true);
         SetPanel(ipPanel, false);
         SetPanel(pingPanel, false);
         SetPanel(browserPanel, false);
+
+        UpdateNetworkStatus();
     }
 
     public void ShowIPConfig()
     {
-        SetPanel(Header,true);
+        SetPanel(Header, true);
         SetPanel(homePanel, false);
         SetPanel(ipPanel, true);
         SetPanel(pingPanel, false);
         SetPanel(browserPanel, false);
 
         LoadIPConfigFromDevice();
+        UpdateNetworkStatus();
     }
 
     public void ShowPing()
     {
-        SetPanel(Header,true);
+        SetPanel(Header, true);
         SetPanel(homePanel, false);
         SetPanel(ipPanel, false);
         SetPanel(pingPanel, true);
         SetPanel(browserPanel, false);
+
+        UpdateNetworkStatus();
     }
 
     public void ShowBrowser()
     {
-        SetPanel(Header,false);
+        SetPanel(Header, true);
         SetPanel(homePanel, false);
         SetPanel(ipPanel, false);
         SetPanel(pingPanel, false);
         SetPanel(browserPanel, true);
 
         HideBrowserResults();
+        UpdateNetworkStatus();
     }
 
     private void SetPanel(GameObject panel, bool active)
@@ -111,6 +156,107 @@ public class ComputerHomeUI : MonoBehaviour
         {
             panel.SetActive(active);
         }
+    }
+
+    // ================= SIMPLE NETWORK STATUS =================
+
+    private void UpdateNetworkStatus()
+    {
+        if (device == null)
+        {
+            SetNetworkStatus("", iconDisconnected, normalColor);
+            return;
+        }
+
+        if (!device.isConnected)
+        {
+            SetNetworkStatus("", iconDisconnected, normalColor);
+            return;
+        }
+
+        if (!device.ipConfigValid)
+        {
+            SetNetworkStatus("Unidentified network", iconWarning, normalColor);
+            return;
+        }
+
+        string targetAddress = GetTargetNanoAddress();
+
+        WirelessDevice wireless = WirelessDevice.FindNanoByIP(targetAddress);
+
+        if (wireless == null)
+        {
+            SetNetworkStatus("LAN connected", iconLanConnected, normalColor);
+            return;
+        }
+
+        if (!wireless.physicalLinkActive)
+        {
+            SetNetworkStatus("LAN connected", iconLanConnected, normalColor);
+            return;
+        }
+
+        if (!wireless.ipConfigValid)
+        {
+            SetNetworkStatus("Unidentified network", iconWarning, normalColor);
+            return;
+        }
+
+        if (!TryParseIP(device.ipAddress, out uint computerIP))
+        {
+            SetNetworkStatus("Unidentified network", iconWarning, normalColor);
+            return;
+        }
+
+        if (!TryParseIP(device.netmask, out uint computerMask))
+        {
+            SetNetworkStatus("Unidentified network", iconWarning, normalColor);
+            return;
+        }
+
+        if (!TryParseIP(wireless.ipAddress, out uint nanoIP))
+        {
+            SetNetworkStatus("Unidentified network", iconWarning, normalColor);
+            return;
+        }
+
+        if (!IsSameSubnet(computerIP, nanoIP, computerMask))
+        {
+            SetNetworkStatus("Unidentified network", iconWarning, normalColor);
+            return;
+        }
+
+        SetNetworkStatus("Connected", iconConnected, connectedColor);
+    }
+
+    private void SetNetworkStatus(string message, Sprite icon, Color color)
+    {
+        if (connectionStatusText != null)
+        {
+            connectionStatusText.text = message;
+            connectionStatusText.color = color;
+        }
+
+        if (connectionIcon != null)
+        {
+            connectionIcon.sprite = icon;
+            connectionIcon.color = color;
+        }
+    }
+
+    private string GetTargetNanoAddress()
+    {
+        if (addressInput != null && !string.IsNullOrWhiteSpace(addressInput.text))
+        {
+            return CleanAddress(addressInput.text);
+        }
+
+        if (pingTargetInput != null && !string.IsNullOrWhiteSpace(pingTargetInput.text))
+        {
+            return CleanAddress(pingTargetInput.text);
+        }
+
+        return defaultNanoIP;
     }
 
     // ================= IP CONFIG =================
@@ -169,18 +315,23 @@ public class ComputerHomeUI : MonoBehaviour
         }
 
         Debug.Log("IP Config Applied");
+
+        UpdateNetworkStatus();
     }
 
     public void OnClickCancelIPConfig()
     {
         LoadIPConfigFromDevice();
         ShowHome();
+        UpdateNetworkStatus();
     }
 
     // ================= PING CMD STYLE =================
 
     public void OnClickPing()
     {
+        UpdateNetworkStatus();
+
         if (pingCoroutine != null)
         {
             StopCoroutine(pingCoroutine);
@@ -257,6 +408,8 @@ public class ComputerHomeUI : MonoBehaviour
             AppendPingLine("Approximate round trip times in milli-seconds:");
             AppendPingLine("    Minimum = 1ms, Maximum = 4ms, Average = 2ms");
         }
+
+        UpdateNetworkStatus();
     }
 
     private bool CanPingTarget(uint targetIP, string targetText, out string failMessage)
@@ -372,6 +525,7 @@ public class ComputerHomeUI : MonoBehaviour
     public void OnClickOpenBrowserAddress()
     {
         HideBrowserResults();
+        UpdateNetworkStatus();
 
         if (device == null)
         {
@@ -400,13 +554,13 @@ public class ComputerHomeUI : MonoBehaviour
 
         if (!device.isConnected)
         {
-            ShowBrowserError("Tidak dapat membuka halaman. Kabel LAN komputer belum tersambung.");
+            ShowBrowserError("LAN cable is unplugged.");
             return;
         }
 
         if (!device.ipConfigValid)
         {
-            ShowBrowserError("Tidak dapat membuka halaman. Konfigurasi IP komputer belum valid.");
+            ShowBrowserError("Konfigurasi IP komputer belum valid.");
             return;
         }
 
@@ -420,7 +574,7 @@ public class ComputerHomeUI : MonoBehaviour
 
         if (!wireless.physicalLinkActive)
         {
-            ShowBrowserError("NanoStation ditemukan, tetapi belum tersambung ke jalur LAN / PoE.");
+            ShowBrowserError("NanoStation belum tersambung ke jalur LAN / PoE.");
             return;
         }
 
@@ -455,6 +609,7 @@ public class ComputerHomeUI : MonoBehaviour
         }
 
         OpenNanoUI(address, wireless);
+        UpdateNetworkStatus();
     }
 
     private void HideBrowserResults()
@@ -490,7 +645,7 @@ public class ComputerHomeUI : MonoBehaviour
         if (browserResultText != null)
         {
             browserResultText.text = "Halaman berhasil dibuka: " + address;
-            browserResultText.color = Color.green;
+            browserResultText.color = connectedColor;
         }
 
         if (browserContentPanel != null)
@@ -523,7 +678,7 @@ public class ComputerHomeUI : MonoBehaviour
         if (browserResultText != null)
         {
             browserResultText.text = message;
-            browserResultText.color = Color.red;
+            browserResultText.color = disconnectedColor;
         }
 
         if (nanoUICanvas != null)
@@ -545,6 +700,8 @@ public class ComputerHomeUI : MonoBehaviour
         {
             errorText.text = message;
         }
+
+        UpdateNetworkStatus();
     }
 
     // ================= IP HELPER =================
