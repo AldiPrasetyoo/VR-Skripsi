@@ -228,6 +228,8 @@ GameObject:
   - component: {fileID: 5638715981458143109}
   - component: {fileID: 1396607891511561644}
   - component: {fileID: 3273939501846597201}
+  - component: {fileID: 3351901383445987164}
+  - component: {fileID: 3158966233113950099}
   m_Layer: 0
   m_Name: Nanostation M5
   m_TagString: Untagged
@@ -481,7 +483,7 @@ MonoBehaviour:
   m_SmoothRotation: 0
   m_SmoothRotationAmount: 8
   m_TightenRotation: 0.1
-  m_TrackScale: 1
+  m_TrackScale: 0
   m_SmoothScale: 0
   m_SmoothScaleAmount: 8
   m_TightenScale: 0.1
@@ -591,16 +593,17 @@ MonoBehaviour:
   lan1Mac: 
   networkMode: 0
   disableNetwork: 0
-  netmask: 255.255.255.0
-  primaryDNS: 8.8.8.8
-  secondaryDNS: 8.8.4.4
+  netmask: 0.0.0.0
+  primaryDNS: 0.0.0.0
+  secondaryDNS: 0.0.0.0
   mtu: 1500
   hasPower: 0
   physicalLinkActive: 0
   ipConfigValid: 0
   outputPower: 10
   antennaGain: 16
-  frequency: 2412
+  frequency: 5745
+  channel: 149
   beamWidth: 60
   channelWidth: 1
   channelShift: 0
@@ -624,7 +627,6 @@ MonoBehaviour:
   countryCode: Indonesia
   ieee80211Mode: 0
   extensionChannel: 0
-  channel: 1
   freqScan: 0
   calculateEIRP: 1
   autoEIRP: 0
@@ -636,6 +638,36 @@ MonoBehaviour:
   lockToAPSSID: 
   lan0Connector: {fileID: 5333891156740603904}
   lan1Connector: {fileID: 2575477723389939214}
+--- !u!114 &3351901383445987164
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 710405073226115560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f40f19f1be98bd42a26c8c39c53d2dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemGrabScale
+--- !u!114 &3158966233113950099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 710405073226115560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb8e91cfb0763f6468009f3ce26dbaf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  itemName: Nano
+  slotRotation: {x: 0, y: 0, z: 0}
+  grabScale: 0.3
+  inventoryScale: 0.5
+  inSlot: 0
+  currentSlot: {fileID: 0}
 --- !u!1 &1237113066810893099
 GameObject:
   m_ObjectHideFlags: 0

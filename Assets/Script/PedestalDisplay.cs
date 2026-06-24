@@ -23,12 +23,16 @@ namespace HPhysic
         public int maxSpawnCount = 1;
         public bool onlyAllowOneActiveObject = true;
 
+        [Header("Grab Target")]
+        public bool grabFromChild = false;
+
         private int spawnedCount;
         private GameObject currentSpawnedObject;
 
         private XRGrabInteractable displayGrab;
         private Rigidbody rb;
         private bool isSpawning;
+
 
         private void Awake()
         {
@@ -44,6 +48,7 @@ namespace HPhysic
             displayGrab.selectEntered.AddListener(OnDisplayGrabbed);
         }
 
+
         private void Start()
         {
             SnapDisplayPosition();
@@ -56,6 +61,7 @@ namespace HPhysic
                 rb.angularVelocity = Vector3.zero;
             }
         }
+
 
         private void LateUpdate()
         {
@@ -70,9 +76,11 @@ namespace HPhysic
             }
         }
 
+
         private void OnDisplayGrabbed(SelectEnterEventArgs args)
         {
             if (isSpawning) return;
+
 
             if (prefabToSpawn == null)
             {
@@ -80,16 +88,21 @@ namespace HPhysic
                 return;
             }
 
+
             if (!CanSpawn())
             {
                 Debug.Log("Spawn dibatasi. Tidak bisa mengambil item lagi.");
+
                 ForceReleaseDisplay(args);
                 SnapDisplayPosition();
+
                 return;
             }
 
+
             StartCoroutine(SpawnPrefabAndGrab(args));
         }
+
 
         private bool CanSpawn()
         {
@@ -98,28 +111,39 @@ namespace HPhysic
                 return false;
             }
 
+
             if (onlyAllowOneActiveObject && currentSpawnedObject != null)
             {
                 return false;
             }
 
+
             return true;
         }
+
 
         private IEnumerator SpawnPrefabAndGrab(SelectEnterEventArgs args)
         {
             isSpawning = true;
 
+
             IXRSelectInteractor interactor = args.interactorObject;
             XRInteractionManager manager = displayGrab.interactionManager;
 
+
             Component interactorComponent = interactor as Component;
-            Transform handTransform = interactorComponent != null ? interactorComponent.transform : transform;
+
+            Transform handTransform = interactorComponent != null 
+                ? interactorComponent.transform 
+                : transform;
+
 
             ForceReleaseDisplay(args);
             SnapDisplayPosition();
 
+
             yield return null;
+
 
             GameObject spawnedObject = Instantiate(
                 prefabToSpawn,
@@ -127,8 +151,10 @@ namespace HPhysic
                 handTransform.rotation
             );
 
+
             currentSpawnedObject = spawnedObject;
             spawnedCount++;
+
 
             Rigidbody spawnedRb = spawnedObject.GetComponent<Rigidbody>();
 
@@ -136,13 +162,30 @@ namespace HPhysic
             {
                 spawnedRb.linearVelocity = Vector3.zero;
                 spawnedRb.angularVelocity = Vector3.zero;
+
                 spawnedRb.isKinematic = false;
                 spawnedRb.useGravity = false;
             }
 
-            XRGrabInteractable spawnedGrab = spawnedObject.GetComponent<XRGrabInteractable>();
+
+
+            XRGrabInteractable spawnedGrab;
+
+
+            // PILIH GRAB DARI ROOT ATAU CHILD
+            if (grabFromChild)
+            {
+                spawnedGrab = spawnedObject.GetComponentInChildren<XRGrabInteractable>();
+            }
+            else
+            {
+                spawnedGrab = spawnedObject.GetComponent<XRGrabInteractable>();
+            }
+
+
 
             yield return null;
+
 
             if (spawnedGrab != null && manager != null)
             {
@@ -150,28 +193,43 @@ namespace HPhysic
             }
             else
             {
-                Debug.LogWarning("Prefab hasil spawn tidak punya XRGrabInteractable.");
+                Debug.LogWarning(
+                    "Prefab hasil spawn tidak punya XRGrabInteractable di target yang dipilih."
+                );
             }
+
 
             SnapDisplayPosition();
 
+
             isSpawning = false;
         }
+
+
 
         private void ForceReleaseDisplay(SelectEnterEventArgs args)
         {
             if (displayGrab == null) return;
             if (displayGrab.interactionManager == null) return;
 
-            displayGrab.interactionManager.SelectExit(args.interactorObject, displayGrab);
+
+            displayGrab.interactionManager.SelectExit(
+                args.interactorObject,
+                displayGrab
+            );
         }
+
+
 
         private void SnapDisplayPosition()
         {
             if (pedestalPoint == null) return;
 
+
             transform.position = pedestalPoint.position;
         }
+
+
 
         public void ResetSpawnLimit()
         {

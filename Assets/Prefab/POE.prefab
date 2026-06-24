@@ -10997,6 +10997,8 @@ GameObject:
   - component: {fileID: 6125864341500745674}
   - component: {fileID: 3561380136659070376}
   - component: {fileID: 2943538533616327622}
+  - component: {fileID: 7811045921297343022}
+  - component: {fileID: -5599061242094941835}
   m_Layer: 0
   m_Name: POE
   m_TagString: Untagged
@@ -11290,7 +11292,7 @@ MonoBehaviour:
   m_SmoothRotation: 0
   m_SmoothRotationAmount: 8
   m_TightenRotation: 0.1
-  m_TrackScale: 1
+  m_TrackScale: 0
   m_SmoothScale: 0
   m_SmoothScaleAmount: 8
   m_TightenScale: 0.1
@@ -11332,3 +11334,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   rotateSpeed: 90
+--- !u!114 &7811045921297343022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8606023788222496839}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb8e91cfb0763f6468009f3ce26dbaf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  itemName: 
+  slotRotation: {x: 0, y: 0, z: 0}
+  grabScale: 0.5
+  inventoryScale: 0.5
+  inSlot: 0
+  currentSlot: {fileID: 0}
+--- !u!114 &-5599061242094941835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8606023788222496839}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f40f19f1be98bd42a26c8c39c53d2dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'

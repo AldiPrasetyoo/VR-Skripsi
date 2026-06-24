@@ -22,7 +22,7 @@ public class WirelessDevice : MonoBehaviour
 
     // ================= MODE =================
     [Header("Mode Configuration")]
-    public WirelessMode mode = WirelessMode.Station;
+    public WirelessMode mode = WirelessMode.None;
     public Sprite deviceIcon;
 
     [HideInInspector] public NetworkDevice networkDevice;
@@ -50,9 +50,9 @@ public class WirelessDevice : MonoBehaviour
     public NetworkMode networkMode = NetworkMode.Bridge;
     public bool disableNetwork;
 
-    public string netmask = "255.255.255.0";
-    public string primaryDNS = "8.8.8.8";
-    public string secondaryDNS = "8.8.4.4";
+    public string netmask = "0.0.0.0";
+    public string primaryDNS = "0.0.0.0";
+    public string secondaryDNS = "0.0.0.0";
     public int mtu = 1500;
 
     // ================= POWER =================
@@ -67,18 +67,42 @@ public class WirelessDevice : MonoBehaviour
     private static readonly List<WirelessDevice> allWirelessDevices = new List<WirelessDevice>();
 
     // ================= RADIO =================
-    [Header("Radio Settings")]
+    [Header("Radio Settings - NanoStation M5 Indonesia")]
     [Range(0f, 27f)] public float outputPower = 10f;
     public float antennaGain = 16f;
 
-    [Tooltip("Gunakan MHz untuk perhitungan FSPL standar, misalnya 2412 atau 5180")]
-    public float frequency = 2412f;
+    [Tooltip("Untuk AP: pilih frequency. Untuk Station: otomatis ikut frequency AP.")]
+    public float frequency = 5745f;
+
+    [Tooltip("Otomatis mengikuti frequency. 5745=149, 5765=153, 5785=157, 5805=161, 5825=165")]
+    public int channel = 149;
 
     public float beamWidth = 60f;
 
     public ChannelWidth channelWidth = ChannelWidth.CW20Mhz;
     public ChannelShift channelShift;
 
+    private static readonly float[] indonesiaNanoM5Frequencies =
+    {
+        5745f,
+        5765f,
+        5785f,
+        5805f,
+        5825f
+    };
+
+    private static readonly int[] indonesiaNanoM5Channels =
+    {
+        149,
+        153,
+        157,
+        161,
+        165
+    };
+
+    private const float FrequencyTolerance = 0.5f;
+
+    // ================= REALTIME DIAGNOSTICS =================
     [Header("Realtime Diagnostics")]
     public float currentSignal = -120f;
     public float currentEIRP;
@@ -115,7 +139,6 @@ public class WirelessDevice : MonoBehaviour
 
     public IEEE80211Mode ieee80211Mode;
     public ExtensionChannel extensionChannel;
-    public int channel = 1;
 
     public bool freqScan;
     public bool calculateEIRP = true;
@@ -156,6 +179,13 @@ public class WirelessDevice : MonoBehaviour
         wlan0Mac = baseMac;
         lan0Mac = IncrementMac(baseMac, 1);
         lan1Mac = IncrementMac(baseMac, 2);
+
+        SyncFrequencyAndChannel();
+    }
+
+    void OnValidate()
+    {
+        SyncFrequencyAndChannel();
     }
 
     void OnEnable()
@@ -190,6 +220,17 @@ public class WirelessDevice : MonoBehaviour
 
         UpdateComputerAccessStatus();
 
+        // AP menjaga frequency/channel sesuai pilihan Indonesia.
+        // Station akan mengikuti AP kalau sudah connect.
+        if (mode == WirelessMode.AccessPoint)
+        {
+            SyncFrequencyAndChannel();
+        }
+        else if (mode == WirelessMode.Station && connectedAP != null)
+        {
+            FollowAPFrequency();
+        }
+
         currentEIRP = GetEIRP();
 
         // JIKA MATI / TIDAK ADA DAYA POE
@@ -221,6 +262,9 @@ public class WirelessDevice : MonoBehaviour
             SetStationInternetBridge(false);
             return;
         }
+
+        // Station selalu ikut frequency/channel AP selama terkoneksi.
+        FollowAPFrequency();
 
         currentSignal = CalculateSignal(connectedAP);
         horizontalSignal = currentSignal + Random.Range(-1f, 1f);
@@ -263,6 +307,88 @@ public class WirelessDevice : MonoBehaviour
         SetStationInternetBridge(internetState);
     }
 
+    // ================= FREQUENCY / CHANNEL INDONESIA =================
+
+    public void SetIndonesiaFrequencyByIndex(int index)
+    {
+        index = Mathf.Clamp(index, 0, indonesiaNanoM5Frequencies.Length - 1);
+
+        frequency = indonesiaNanoM5Frequencies[index];
+        channel = indonesiaNanoM5Channels[index];
+
+        Debug.Log($"📡 {deviceName} Frequency diset ke {frequency:0} MHz | Channel {channel}");
+    }
+
+    public void SetFrequencyMHz(float frequencyMHz)
+    {
+        int index = GetClosestIndonesiaFrequencyIndex(frequencyMHz);
+
+        frequency = indonesiaNanoM5Frequencies[index];
+        channel = indonesiaNanoM5Channels[index];
+
+        Debug.Log($"📡 {deviceName} Frequency diset ke {frequency:0} MHz | Channel {channel}");
+    }
+
+    public int GetIndonesiaFrequencyIndex()
+    {
+        for (int i = 0; i < indonesiaNanoM5Frequencies.Length; i++)
+        {
+            if (Mathf.Abs(frequency - indonesiaNanoM5Frequencies[i]) <= FrequencyTolerance)
+            {
+                return i;
+            }
+        }
+
+        return GetClosestIndonesiaFrequencyIndex(frequency);
+    }
+
+    public string GetFrequencyWithChannelText()
+    {
+        return $"{frequency:0} MHz / CH {channel}";
+    }
+
+    private void SyncFrequencyAndChannel()
+    {
+        int index = GetIndonesiaFrequencyIndex();
+
+        frequency = indonesiaNanoM5Frequencies[index];
+        channel = indonesiaNanoM5Channels[index];
+
+        countryCode = "Indonesia";
+    }
+
+    private void FollowAPFrequency()
+    {
+        if (connectedAP == null)
+        {
+            return;
+        }
+
+        connectedAP.SyncFrequencyAndChannel();
+
+        frequency = connectedAP.frequency;
+        channel = connectedAP.channel;
+    }
+
+    private int GetClosestIndonesiaFrequencyIndex(float targetFrequency)
+    {
+        int closestIndex = 0;
+        float closestDistance = Mathf.Abs(targetFrequency - indonesiaNanoM5Frequencies[0]);
+
+        for (int i = 1; i < indonesiaNanoM5Frequencies.Length; i++)
+        {
+            float distance = Mathf.Abs(targetFrequency - indonesiaNanoM5Frequencies[i]);
+
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+
+        return closestIndex;
+    }
+
     // ================= LOGIC PERANGKAT =================
 
     void UpdateLANStatus()
@@ -277,9 +403,6 @@ public class WirelessDevice : MonoBehaviour
             (lan0Connector != null && lan0Connector.ConnectedTo != null) ||
             (lan1Connector != null && lan1Connector.ConnectedTo != null);
 
-        // Untuk akses dari komputer, Nano harus:
-        // 1. Tersambung LAN
-        // 2. Mendapat power dari PoE
         physicalLinkActive = lanConnected && hasPower;
 
         ipConfigValid =
@@ -298,6 +421,7 @@ public class WirelessDevice : MonoBehaviour
 
         if (mode == WirelessMode.AccessPoint)
         {
+            SyncFrequencyAndChannel();
             NetworksRegistry.RegisterAP(this);
         }
     }
@@ -307,7 +431,18 @@ public class WirelessDevice : MonoBehaviour
         if (!hasPower || ap == null || !ap.hasPower) return;
         if (mode != WirelessMode.Station || ap.mode != WirelessMode.AccessPoint) return;
 
-        if (!string.IsNullOrEmpty(lockToAPSSID) && ap.ssid != lockToAPSSID) return;
+        // Station tidak perlu set frequency manual.
+        // Station otomatis ikut frequency dan channel AP.
+        ap.SyncFrequencyAndChannel();
+
+        frequency = ap.frequency;
+        channel = ap.channel;
+
+        if (!string.IsNullOrEmpty(lockToAPSSID) && ap.ssid != lockToAPSSID)
+        {
+            Debug.LogWarning($"❌ Gagal menyambung: SSID tidak cocok. LockToAP={lockToAPSSID}, AP={ap.ssid}");
+            return;
+        }
 
         if (ap.securityMode != SecurityMode.None && ap.password != inputPassword)
         {
@@ -328,6 +463,11 @@ public class WirelessDevice : MonoBehaviour
         }
 
         isConnected = true;
+
+        Debug.Log(
+            $"🟢 {deviceName} CONNECTED ke {ap.deviceName} | " +
+            $"Station ikut AP: {frequency:0} MHz | CH {channel}"
+        );
     }
 
     public void Disconnect()
@@ -401,14 +541,26 @@ public class WirelessDevice : MonoBehaviour
             distance = 1f;
         }
 
-        float fspl = (20f * Mathf.Log10(distance)) + (20f * Mathf.Log10(frequency)) - 27.55f;
+        float usedFrequency = ap != null ? ap.frequency : frequency;
+
+        float fspl =
+            (20f * Mathf.Log10(distance)) +
+            (20f * Mathf.Log10(usedFrequency)) -
+            27.55f;
 
         float txLoss = ap.CalculateAngleLoss(transform);
         float rxLoss = CalculateAngleLoss(ap.transform);
         float interference = GetChannelInterference(ap);
         float obstacleLoss = GetObstacleLoss(ap);
 
-        float receivedPower = ap.GetEIRP() + antennaGain - fspl - txLoss - rxLoss - interference - obstacleLoss;
+        float receivedPower =
+            ap.GetEIRP() +
+            antennaGain -
+            fspl -
+            txLoss -
+            rxLoss -
+            interference -
+            obstacleLoss;
 
         return Mathf.Clamp(receivedPower, -120f, -30f);
     }
@@ -459,11 +611,16 @@ public class WirelessDevice : MonoBehaviour
 
     float GetChannelInterference(WirelessDevice ap)
     {
+        if (ap == null)
+        {
+            return 0f;
+        }
+
         int channelDiff = Mathf.Abs(channel - ap.channel);
 
         if (channelDiff == 0) return 0f;
-        if (channelDiff <= 2) return 12f;
         if (channelDiff <= 4) return 6f;
+        if (channelDiff <= 8) return 3f;
 
         return 0f;
     }
@@ -497,7 +654,7 @@ public class WirelessDevice : MonoBehaviour
 
     public string GetFrequencyBand()
     {
-        return frequency < 4000f ? "2.4 GHz" : "5 GHz";
+        return "5 GHz";
     }
 
     public float CalculateDistance()
@@ -572,8 +729,12 @@ public class WirelessDevice : MonoBehaviour
 
         for (int i = 0; i < 4; i++)
         {
-            int a = int.Parse(ipA[i]) & int.Parse(mask[i]);
-            int b = int.Parse(ipB[i]) & int.Parse(mask[i]);
+            if (!int.TryParse(ipA[i], out int aPart)) return false;
+            if (!int.TryParse(ipB[i], out int bPart)) return false;
+            if (!int.TryParse(mask[i], out int maskPart)) return false;
+
+            int a = aPart & maskPart;
+            int b = bPart & maskPart;
 
             if (a != b)
             {

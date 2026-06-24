@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.UI;
@@ -168,6 +169,46 @@ public class VRLearningUIController : MonoBehaviour
     [Header("Debug Panel")]
     public bool enablePanelDebugLog = false;
 
+    // ================= SOUND TAMBAHAN =================
+
+    [Header("UI Sound")]
+    public bool enableUISound = true;
+    public bool autoCreateAudioSource = true;
+    public bool autoRegisterAllChildButtons = true;
+
+    [Tooltip("Kalau ada button yang bukan child dari object ini, masukkan ke sini.")]
+    public Button[] extraSoundButtons;
+
+    [Header("Audio Source")]
+    public AudioSource audioSource;
+
+    [Header("Audio Clip")]
+    public AudioClip hoverClip;
+    public AudioClip clickClip;
+    public AudioClip pageOpenClip;
+    public AudioClip slideChangeClip;
+    public AudioClip backClip;
+    public AudioClip finishClip;
+    public AudioClip errorClip;
+
+    [Header("Volume Sound")]
+    [Range(0f, 1f)] public float hoverVolume = 0.65f;
+    [Range(0f, 1f)] public float clickVolume = 0.85f;
+    [Range(0f, 1f)] public float pageOpenVolume = 0.75f;
+    [Range(0f, 1f)] public float slideChangeVolume = 0.75f;
+    [Range(0f, 1f)] public float backVolume = 0.75f;
+    [Range(0f, 1f)] public float finishVolume = 0.85f;
+    [Range(0f, 1f)] public float errorVolume = 0.85f;
+
+    [Header("Hover Sound Setting")]
+    public float hoverSoundCooldown = 0.08f;
+
+    private readonly HashSet<Button> registeredSoundButtons = new HashSet<Button>();
+    private float lastHoverSoundTime = -999f;
+    private bool isInitializing = true;
+
+    // ================= RUNTIME =================
+
     private int currentPageIndex = -1;
 
     private int currentTopicIndex = 0;
@@ -184,6 +225,10 @@ public class VRLearningUIController : MonoBehaviour
 
     private void Start()
     {
+        isInitializing = true;
+
+        SetupAudioSource();
+
         AutoFindButtonTexts();
         InitCompletedData();
         InitNavbarHover();
@@ -195,9 +240,199 @@ public class VRLearningUIController : MonoBehaviour
         SetupJumpButtons();
         SetupSlideButtons();
 
+        RegisterAllButtonSounds();
+
         ShowPageByName(homePageName);
         ShowMateriIntro();
+
+        isInitializing = false;
     }
+
+    // ================= SOUND SYSTEM =================
+
+    private void SetupAudioSource()
+    {
+        if (!enableUISound) return;
+
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+        }
+
+        if (audioSource == null && autoCreateAudioSource)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        if (audioSource != null)
+        {
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
+            audioSource.spatialBlend = 0f;
+        }
+    }
+
+    private void RegisterAllButtonSounds()
+    {
+        if (!enableUISound) return;
+
+        registeredSoundButtons.Clear();
+
+        if (pages != null)
+        {
+            for (int i = 0; i < pages.Length; i++)
+            {
+                if (pages[i] != null)
+                {
+                    RegisterButtonSound(pages[i].button);
+                }
+            }
+        }
+
+        RegisterButtonSound(kembaliButton);
+        RegisterButtonSound(mulaiButton);
+        RegisterButtonSound(sebelumButton);
+        RegisterButtonSound(lanjutButton);
+
+        if (materiTopics != null)
+        {
+            for (int i = 0; i < materiTopics.Length; i++)
+            {
+                if (materiTopics[i] == null) continue;
+
+                RegisterButtonSound(materiTopics[i].cardButton);
+                RegisterButtonSound(materiTopics[i].subBackButton);
+                RegisterButtonSound(materiTopics[i].subContinueButton);
+
+                if (materiTopics[i].subTopics != null)
+                {
+                    for (int j = 0; j < materiTopics[i].subTopics.Length; j++)
+                    {
+                        if (materiTopics[i].subTopics[j] == null) continue;
+
+                        RegisterButtonSound(materiTopics[i].subTopics[j].subButton);
+                    }
+                }
+            }
+        }
+
+        if (jumpButtons != null)
+        {
+            for (int i = 0; i < jumpButtons.Length; i++)
+            {
+                if (jumpButtons[i] == null) continue;
+
+                RegisterButtonSound(jumpButtons[i].button);
+            }
+        }
+
+        if (extraSoundButtons != null)
+        {
+            for (int i = 0; i < extraSoundButtons.Length; i++)
+            {
+                RegisterButtonSound(extraSoundButtons[i]);
+            }
+        }
+
+        if (autoRegisterAllChildButtons)
+        {
+            Button[] childButtons = GetComponentsInChildren<Button>(true);
+
+            for (int i = 0; i < childButtons.Length; i++)
+            {
+                RegisterButtonSound(childButtons[i]);
+            }
+        }
+    }
+
+    private void RegisterButtonSound(Button button)
+    {
+        if (!enableUISound) return;
+        if (button == null) return;
+
+        if (registeredSoundButtons.Contains(button))
+        {
+            return;
+        }
+
+        registeredSoundButtons.Add(button);
+
+        button.onClick.AddListener(() =>
+        {
+            PlayClickSound();
+        });
+
+        EventTrigger trigger = button.GetComponent<EventTrigger>();
+
+        if (trigger == null)
+        {
+            trigger = button.gameObject.AddComponent<EventTrigger>();
+        }
+
+        EventTrigger.Entry enterEntry = new EventTrigger.Entry();
+        enterEntry.eventID = EventTriggerType.PointerEnter;
+        enterEntry.callback.AddListener((data) =>
+        {
+            PlayHoverSound();
+        });
+
+        trigger.triggers.Add(enterEntry);
+    }
+
+    private void PlayHoverSound()
+    {
+        if (!enableUISound) return;
+
+        if (Time.unscaledTime - lastHoverSoundTime < hoverSoundCooldown)
+        {
+            return;
+        }
+
+        lastHoverSoundTime = Time.unscaledTime;
+
+        PlaySound(hoverClip, hoverVolume);
+    }
+
+    private void PlayClickSound()
+    {
+        PlaySound(clickClip, clickVolume);
+    }
+
+    private void PlayPageOpenSound()
+    {
+        PlaySound(pageOpenClip, pageOpenVolume);
+    }
+
+    private void PlaySlideChangeSound()
+    {
+        PlaySound(slideChangeClip, slideChangeVolume);
+    }
+
+    private void PlayBackSound()
+    {
+        PlaySound(backClip, backVolume);
+    }
+
+    private void PlayFinishSound()
+    {
+        PlaySound(finishClip, finishVolume);
+    }
+
+    private void PlayErrorSound()
+    {
+        PlaySound(errorClip, errorVolume);
+    }
+
+    private void PlaySound(AudioClip clip, float volume)
+    {
+        if (!enableUISound) return;
+        if (audioSource == null) return;
+        if (clip == null) return;
+
+        audioSource.PlayOneShot(clip, volume);
+    }
+
+    // ================= INIT =================
 
     private void AutoFindButtonTexts()
     {
@@ -254,6 +489,8 @@ public class VRLearningUIController : MonoBehaviour
         navHoverStates = new bool[pages.Length];
     }
 
+    // ================= SETUP BUTTON =================
+
     private void SetupNavbarButtons()
     {
         if (pages == null) return;
@@ -270,7 +507,9 @@ public class VRLearningUIController : MonoBehaviour
                     ShowPage(index);
 
                     if (IsSamePage(pages[index].pageName, materiPageName))
+                    {
                         ShowMateriIntro();
+                    }
                 });
 
                 AddNavbarHoverEvent(pages[i].button, index);
@@ -369,6 +608,11 @@ public class VRLearningUIController : MonoBehaviour
                 materiTopics[topicIndex].subBackButton.onClick.AddListener(() =>
                 {
                     ShowMateriIntro();
+
+                    if (!isInitializing)
+                    {
+                        PlayBackSound();
+                    }
                 });
             }
 
@@ -438,15 +682,26 @@ public class VRLearningUIController : MonoBehaviour
         }
     }
 
+    // ================= NAVIGATION =================
+
     public void KembaliKeHome()
     {
         ShowPageByName(homePageName);
         ShowMateriIntro();
+
+        if (!isInitializing)
+        {
+            PlayBackSound();
+        }
     }
 
     public void MulaiAtauLanjutkan()
     {
-        if (materiTopics == null || materiTopics.Length == 0) return;
+        if (materiTopics == null || materiTopics.Length == 0)
+        {
+            PlayErrorSound();
+            return;
+        }
 
         if (IsAllTopicsCompleted())
         {
@@ -461,7 +716,11 @@ public class VRLearningUIController : MonoBehaviour
 
     public void BukaMateriLangsung(int topicIndex)
     {
-        if (materiTopics == null || materiTopics.Length == 0) return;
+        if (materiTopics == null || materiTopics.Length == 0)
+        {
+            PlayErrorSound();
+            return;
+        }
 
         topicIndex = Mathf.Clamp(topicIndex, 0, materiTopics.Length - 1);
 
@@ -476,41 +735,75 @@ public class VRLearningUIController : MonoBehaviour
         {
             ShowNormalSlide(topicIndex, 0);
         }
+
+        if (!isInitializing)
+        {
+            PlaySlideChangeSound();
+        }
     }
 
     public void JumpToSlide(int topicIndex, int slideIndex)
     {
-        if (materiTopics == null || materiTopics.Length == 0) return;
+        if (materiTopics == null || materiTopics.Length == 0)
+        {
+            PlayErrorSound();
+            return;
+        }
 
         topicIndex = Mathf.Clamp(topicIndex, 0, materiTopics.Length - 1);
 
         if (materiTopics[topicIndex].useSubMenu)
         {
             ShowSubMenu(topicIndex);
+
+            if (!isInitializing)
+            {
+                PlaySlideChangeSound();
+            }
+
             return;
         }
 
         ShowPageByName(materiPageName);
         ShowMateriSlidePanel();
         ShowNormalSlide(topicIndex, slideIndex);
+
+        if (!isInitializing)
+        {
+            PlaySlideChangeSound();
+        }
     }
 
     public void BukaSubMateriLangsung(int topicIndex, int subTopicIndex)
     {
-        if (!IsValidSubTopic(topicIndex, subTopicIndex)) return;
+        if (!IsValidSubTopic(topicIndex, subTopicIndex))
+        {
+            PlayErrorSound();
+            return;
+        }
 
         ShowPageByName(materiPageName);
         ShowMateriSlidePanel();
         ShowSubSlide(topicIndex, subTopicIndex, 0);
+
+        if (!isInitializing)
+        {
+            PlaySlideChangeSound();
+        }
     }
 
     private void OnSubContinueClicked(int topicIndex)
     {
-        if (topicIndex < 0 || topicIndex >= materiTopics.Length) return;
+        if (topicIndex < 0 || topicIndex >= materiTopics.Length)
+        {
+            PlayErrorSound();
+            return;
+        }
 
         if (AreAllSubTopicsCompleted(topicIndex))
         {
             ShowMateriIntro();
+            PlayFinishSound();
             return;
         }
 
@@ -523,16 +816,28 @@ public class VRLearningUIController : MonoBehaviour
         if (isInSubTopic)
         {
             if (IsFirstSlideInCurrentSubTopic())
+            {
                 ShowSubMenu(currentTopicIndex);
+                PlayBackSound();
+            }
             else
+            {
                 ShowSubSlide(currentTopicIndex, currentSubTopicIndex, currentSubSlideIndex - 1);
+                PlaySlideChangeSound();
+            }
         }
         else
         {
             if (IsFirstSlideInCurrentTopic())
+            {
                 ShowMateriIntro();
+                PlayBackSound();
+            }
             else
+            {
                 ShowNormalSlide(currentTopicIndex, currentSlideIndex - 1);
+                PlaySlideChangeSound();
+            }
         }
     }
 
@@ -541,16 +846,28 @@ public class VRLearningUIController : MonoBehaviour
         if (isInSubTopic)
         {
             if (IsLastSlideInCurrentSubTopic())
+            {
                 FinishCurrentSubTopic();
+                PlayFinishSound();
+            }
             else
+            {
                 ShowSubSlide(currentTopicIndex, currentSubTopicIndex, currentSubSlideIndex + 1);
+                PlaySlideChangeSound();
+            }
         }
         else
         {
             if (IsLastSlideInCurrentTopic())
+            {
                 FinishCurrentTopic();
+                PlayFinishSound();
+            }
             else
+            {
                 ShowNormalSlide(currentTopicIndex, currentSlideIndex + 1);
+                PlaySlideChangeSound();
+            }
         }
     }
 
@@ -580,6 +897,8 @@ public class VRLearningUIController : MonoBehaviour
         ShowSubMenu(currentTopicIndex);
     }
 
+    // ================= SHOW PANEL / SLIDE =================
+
     private void ShowMateriSlidePanel()
     {
         if (materiIntroPanel != null)
@@ -605,7 +924,11 @@ public class VRLearningUIController : MonoBehaviour
 
     private void ShowSubMenu(int topicIndex)
     {
-        if (materiTopics == null || materiTopics.Length == 0) return;
+        if (materiTopics == null || materiTopics.Length == 0)
+        {
+            PlayErrorSound();
+            return;
+        }
 
         topicIndex = Mathf.Clamp(topicIndex, 0, materiTopics.Length - 1);
 
@@ -629,13 +952,18 @@ public class VRLearningUIController : MonoBehaviour
 
     private void ShowNormalSlide(int topicIndex, int slideIndex)
     {
-        if (materiTopics == null || materiTopics.Length == 0) return;
+        if (materiTopics == null || materiTopics.Length == 0)
+        {
+            PlayErrorSound();
+            return;
+        }
 
         topicIndex = Mathf.Clamp(topicIndex, 0, materiTopics.Length - 1);
 
         if (materiTopics[topicIndex].slides == null || materiTopics[topicIndex].slides.Length == 0)
         {
             Debug.LogWarning("Materi belum punya slide: " + materiTopics[topicIndex].topicName);
+            PlayErrorSound();
             return;
         }
 
@@ -664,13 +992,18 @@ public class VRLearningUIController : MonoBehaviour
 
     private void ShowSubSlide(int topicIndex, int subTopicIndex, int slideIndex)
     {
-        if (!IsValidSubTopic(topicIndex, subTopicIndex)) return;
+        if (!IsValidSubTopic(topicIndex, subTopicIndex))
+        {
+            PlayErrorSound();
+            return;
+        }
 
         GameObject[] slides = materiTopics[topicIndex].subTopics[subTopicIndex].slides;
 
         if (slides == null || slides.Length == 0)
         {
             Debug.LogWarning("Sub materi belum punya slide: " + materiTopics[topicIndex].subTopics[subTopicIndex].subTopicName);
+            PlayErrorSound();
             return;
         }
 
@@ -711,6 +1044,7 @@ public class VRLearningUIController : MonoBehaviour
         }
 
         Debug.LogWarning("Page tidak ditemukan: " + pageName);
+        PlayErrorSound();
     }
 
     public void ShowPage(int index)
@@ -718,6 +1052,7 @@ public class VRLearningUIController : MonoBehaviour
         if (pages == null || pages.Length == 0) return;
         if (index < 0 || index >= pages.Length) return;
 
+        int oldPageIndex = currentPageIndex;
         currentPageIndex = index;
 
         for (int i = 0; i < pages.Length; i++)
@@ -733,7 +1068,14 @@ public class VRLearningUIController : MonoBehaviour
 
             UpdateNavbarVisual(pages[i], isActive, isHover);
         }
+
+        if (!isInitializing && oldPageIndex != index)
+        {
+            PlayPageOpenSound();
+        }
     }
+
+    // ================= VISUAL UPDATE =================
 
     private void UpdateNavbarVisual(NavPage page, bool isActive, bool isHover = false)
     {
@@ -939,6 +1281,8 @@ public class VRLearningUIController : MonoBehaviour
         }
     }
 
+    // ================= CHECKER =================
+
     private bool IsFirstSlideInCurrentTopic()
     {
         return currentSlideIndex == 0;
@@ -1092,6 +1436,8 @@ public class VRLearningUIController : MonoBehaviour
 
         UpdateMulaiButtonText();
     }
+
+    // ================= HIDE / ACTIVE =================
 
     private void HideAllSlides()
     {

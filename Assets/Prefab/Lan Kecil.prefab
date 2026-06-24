@@ -2283,6 +2283,8 @@ GameObject:
   - component: {fileID: 6209047639778727862}
   - component: {fileID: 2037006141339643062}
   - component: {fileID: 2558192276369040013}
+  - component: {fileID: 6501070763760607032}
+  - component: {fileID: 8632795139779523947}
   m_Layer: 0
   m_Name: Lan Kecil
   m_TagString: Untagged
@@ -2357,6 +2359,38 @@ MonoBehaviour:
   hasPower: 0
   supportPoE: 1
   requirePowerToWork: 0
+--- !u!114 &6501070763760607032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8148129495412136993}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15ff5db28fe852140a1618ca9cd97260, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  itemName: Kabel RJ45
+  itemIcon: {fileID: -1198455696, guid: c16ba28efe218f747a1d6d381f29795a, type: 3}
+--- !u!114 &8632795139779523947
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8148129495412136993}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb8e91cfb0763f6468009f3ce26dbaf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  itemName: 
+  slotRotation: {x: 0, y: 0, z: 0}
+  grabScale: 1
+  inventoryScale: 1
+  inSlot: 0
+  currentSlot: {fileID: 0}
 --- !u!1 &8580438000251122047
 GameObject:
   m_ObjectHideFlags: 0

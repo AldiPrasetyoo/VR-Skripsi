@@ -1,157 +1,399 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 using HPhysic;
 
 public class LanGhostPreview : MonoBehaviour
 {
     public Connector femaleConnector;
 
-    [Header("Ghost Point (Empty Object)")]
+    [Header("Ghost Point")]
     public Transform ghostPoint;
 
-    private GameObject ghost;
 
     [Header("Detection")]
     public float detectRadius = 0.15f;
 
+
+    private GameObject ghost;
+    private GameObject marker;
+
+
+    private XRGrabInteractable grabbedCable;
+
+    private Renderer markerRenderer;
+
+
+    Color normalMarker = Color.cyan;
+
+
+
     void Start()
     {
-        if (femaleConnector == null)
+
+        if(femaleConnector == null)
             femaleConnector = GetComponent<Connector>();
 
-        if (ghostPoint == null)
-            ghostPoint = transform; // fallback
+
+        if(ghostPoint == null)
+            ghostPoint = transform;
+
     }
+
+
+
 
     void Update()
     {
-        if (femaleConnector == null) return;
 
-        // kalau sudah connect → hapus ghost
-        if (femaleConnector.IsConnected)
+        grabbedCable = FindGrabbedCable();
+
+
+
+        // TIDAK ADA KABEL DIPEGANG
+        if(grabbedCable == null)
         {
+
+            DestroyMarker();
+
             DestroyGhost();
+
             return;
+
         }
 
-        Connector nearestMale = FindNearbyMale();
 
-        if (nearestMale != null)
+
+        // BARU BUAT MARKER SAAT GRAB
+        CreateMarker();
+
+
+
+        Connector male =
+        grabbedCable.GetComponent<Connector>();
+
+
+        if(male == null)
+            return;
+
+
+
+
+        if(femaleConnector.CanConnect(male))
         {
-            ShowGhost(nearestMale);
+
+            ShowGhost(male);
+
+            ChangeMarkerColor(male);
+
         }
         else
         {
+
+            ResetMarkerColor();
+
             DestroyGhost();
+
         }
+
+
+
+
+        if(femaleConnector.IsConnected)
+        {
+
+            DestroyMarker();
+
+            DestroyGhost();
+
+        }
+
+
     }
 
-    // =========================
-    // DETEKSI MALE
-    // =========================
-    Connector FindNearbyMale()
+
+
+
+
+
+
+    XRGrabInteractable FindGrabbedCable()
     {
-        Collider[] hits = Physics.OverlapSphere(
-            ghostPoint.position, // 🔥 pakai ghost point
-            detectRadius
-        );
 
-        foreach (var hit in hits)
+
+        XRGrabInteractable[] all =
+        FindObjectsOfType<XRGrabInteractable>();
+
+
+
+        foreach(var item in all)
         {
-            Connector other = hit.GetComponent<Connector>();
 
-            if (other == null) continue;
-            if (other == femaleConnector) continue;
 
-            if (other.ConnectionType != Connector.ConType.Male)
+            // INI YANG BEDAKAN
+            if(item.interactorsSelecting.Count == 0)
                 continue;
 
-            if (!femaleConnector.CanConnect(other))
+
+
+            Connector c =
+            item.GetComponent<Connector>();
+
+
+
+            if(c == null)
                 continue;
 
-            return other;
+
+
+            if(c.ConnectionType != Connector.ConType.Male)
+                continue;
+
+
+
+            return item;
+
         }
+
+
 
         return null;
+
     }
 
-   // =========================
-    // GHOST
-    // =========================
+
+
+
+
+
+
+
+
+    void CreateMarker()
+    {
+
+        if(marker != null)
+            return;
+
+
+
+        marker =
+        GameObject.CreatePrimitive(
+            PrimitiveType.Sphere
+        );
+
+
+
+        marker.name =
+        "Grab_Marker";
+
+
+
+        marker.transform.SetParent(
+            ghostPoint
+        );
+
+
+
+        marker.transform.localPosition =
+        new Vector3(0,0,0.08f);
+
+
+
+        marker.transform.localScale =
+        Vector3.one * 0.15f;
+
+
+
+        Destroy(
+            marker.GetComponent<Collider>()
+        );
+
+
+
+        markerRenderer =
+        marker.GetComponent<Renderer>();
+
+
+
+        markerRenderer.material.color =
+        normalMarker;
+
+
+    }
+
+
+
+
+
+
+
+    void ChangeMarkerColor(Connector male)
+    {
+
+
+        if(markerRenderer == null)
+            return;
+
+
+
+        Renderer r =
+        male.GetComponentInChildren<Renderer>();
+
+
+
+        if(r != null)
+        {
+
+            markerRenderer.material.color =
+            r.material.color;
+
+        }
+
+
+    }
+
+
+
+
+
+
+    void ResetMarkerColor()
+    {
+
+        if(markerRenderer == null)
+            return;
+
+
+        markerRenderer.material.color =
+        normalMarker;
+
+    }
+
+
+
+
+
+
+
+    void DestroyMarker()
+    {
+
+        if(marker != null)
+        {
+
+            Destroy(marker);
+
+            marker = null;
+
+            markerRenderer = null;
+
+        }
+
+    }
+
+
+
+
+
+
+
+
+
     void ShowGhost(Connector male)
     {
-        if (ghost != null) return;
 
-        ghost = Instantiate(male.gameObject);
+        if(ghost != null)
+            return;
 
-        // 🔥 Ambil script Connector dari ghost untuk menghitung offset-nya
-        Connector ghostConnector = ghost.GetComponent<Connector>();
 
-        if (ghostConnector != null)
+
+        ghost =
+        Instantiate(
+            male.gameObject
+        );
+
+
+
+        ghost.name =
+        "GhostPreview";
+
+
+
+        Connector gc =
+        ghost.GetComponent<Connector>();
+
+
+
+        if(gc != null)
         {
-            // 1. Set Rotasi sesuai dengan offset rotasi bawaan dari ujung kabel tersebut
-            ghost.transform.rotation = ghostPoint.rotation * ghostConnector.RotationOffset;
 
-            // 2. Set Posisi (Penting: Lakukan setelah rotasi agar jarak offset ikut berputar)
-            // Kurangi titik target dengan jarak antara root ghost ke connectionPoint-nya
-            Vector3 positionOffset = ghostConnector.ConnectionPosition - ghost.transform.position;
-            ghost.transform.position = ghostPoint.position - positionOffset;
+            ghost.transform.rotation =
+            ghostPoint.rotation *
+            gc.RotationOffset;
+
+
+
+            Vector3 offset =
+            gc.ConnectionPosition -
+            ghost.transform.position;
+
+
+
+            ghost.transform.position =
+            ghostPoint.position -
+            offset;
+
         }
-        else
-        {
-            // Fallback aman jika entah kenapa connector tidak terbaca
-            ghost.transform.position = ghostPoint.position;
-            ghost.transform.rotation = ghostPoint.rotation;
-        }
 
 
-        // 🔥 MATIKAN semua physics & interaction TANPA DELETE
-        foreach (Collider c in ghost.GetComponentsInChildren<Collider>())
+
+
+
+        foreach(Collider c in ghost.GetComponentsInChildren<Collider>())
             c.enabled = false;
 
-        Rigidbody rb = ghost.GetComponent<Rigidbody>();
-        if (rb != null)
+
+
+        Rigidbody rb =
+        ghost.GetComponent<Rigidbody>();
+
+
+        if(rb != null)
         {
+
             rb.isKinematic = true;
+
             rb.useGravity = false;
+
         }
 
-        // 🔥 disable script berbahaya (tetap bisa baca variabel)
-        foreach (var comp in ghost.GetComponents<MonoBehaviour>())
-        {
-            comp.enabled = false;
-        }
 
-        // 🔥 transparan
-        Renderer[] rends = ghost.GetComponentsInChildren<Renderer>();
 
-        foreach (Renderer r in rends)
-        {
-            if (r.material.HasProperty("_Color"))
-            {
-                Color c = r.material.color;
-                c.a = 0.3f;
-                r.material.color = c;
-            }
-        }
+
+
+        foreach(MonoBehaviour m in ghost.GetComponents<MonoBehaviour>())
+            m.enabled = false;
+
+
     }
+
+
+
+
+
 
     void DestroyGhost()
     {
-        if (ghost != null)
+
+        if(ghost != null)
         {
+
             Destroy(ghost);
+
             ghost = null;
+
         }
+
     }
 
-    // =========================
-    // DEBUG
-    // =========================
-    void OnDrawGizmosSelected()
-    {
-        if (ghostPoint == null) return;
-
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(ghostPoint.position, detectRadius);
-    }
 }

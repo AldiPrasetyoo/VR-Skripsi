@@ -1,7 +1,9 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.EventSystems;
 
 public class ComputerHomeUI : MonoBehaviour
 {
@@ -31,6 +33,7 @@ public class ComputerHomeUI : MonoBehaviour
     public Color warningColor = new Color(1f, 0.65f, 0f);
     public Color disconnectedColor = Color.red;
     public Color normalColor = Color.white;
+    public Color gadaColor = new Color(1f, 0.65f, 0f);
 
     [Header("Network Status Setting")]
     public string defaultNanoIP = "192.168.1.20";
@@ -68,10 +71,60 @@ public class ComputerHomeUI : MonoBehaviour
     [Header("Nano UI Controller")]
     public UI_WirelessDevice nanoUIController;
 
+    // ================= UI SOUND =================
+    [Header("UI Sound")]
+    public bool enableUISound = true;
+    public bool autoFindAudioSource = true;
+    public bool autoRegisterButtonSound = true;
+
+    [Range(0f, 1f)] public float uiVolume = 1f;
+    public AudioSource audioSource;
+
+    [Header("Button Sound")]
+    public AudioClip hoverClip;
+    public AudioClip clickClip;
+    public AudioClip panelOpenClip;
+
+    [Header("Action Sound")]
+    public AudioClip applyClip;
+    public AudioClip cancelClip;
+    public AudioClip pingStartClip;
+    public AudioClip pingReplyClip;
+    public AudioClip pingFailClip;
+    public AudioClip browserOpenClip;
+    public AudioClip successClip;
+    public AudioClip errorClip;
+
+    [Header("Network Status Sound")]
+    public AudioClip connectedClip;
+    public AudioClip warningClip;
+    public AudioClip disconnectedClip;
+    public AudioClip lanConnectedClip;
+
+    [Header("Optional Extra Buttons")]
+    public Button[] extraButtons;
+
     private Coroutine pingCoroutine;
+    private bool isInitializing = true;
+    private readonly HashSet<Button> registeredSoundButtons = new HashSet<Button>();
+
+    private enum NetworkSoundState
+    {
+        Unknown,
+        Disconnected,
+        Warning,
+        LanConnected,
+        Connected
+    }
+
+    private NetworkSoundState lastNetworkSoundState = NetworkSoundState.Unknown;
 
     private void Start()
     {
+        isInitializing = true;
+        InitAudio();
+        RegisterButtonSounds();
+
         ShowHome();
         LoadIPConfigFromDevice();
 
@@ -87,6 +140,8 @@ public class ComputerHomeUI : MonoBehaviour
 
         HideBrowserResults();
         UpdateNetworkStatus();
+
+        isInitializing = false;
     }
 
     private void Update()
@@ -106,6 +161,8 @@ public class ComputerHomeUI : MonoBehaviour
 
     public void ShowHome()
     {
+        PlayUISound(panelOpenClip);
+
         SetPanel(Header, true);
         SetPanel(homePanel, true);
         SetPanel(ipPanel, false);
@@ -117,6 +174,8 @@ public class ComputerHomeUI : MonoBehaviour
 
     public void ShowIPConfig()
     {
+        PlayUISound(panelOpenClip);
+
         SetPanel(Header, true);
         SetPanel(homePanel, false);
         SetPanel(ipPanel, true);
@@ -129,6 +188,8 @@ public class ComputerHomeUI : MonoBehaviour
 
     public void ShowPing()
     {
+        PlayUISound(panelOpenClip);
+
         SetPanel(Header, true);
         SetPanel(homePanel, false);
         SetPanel(ipPanel, false);
@@ -140,6 +201,8 @@ public class ComputerHomeUI : MonoBehaviour
 
     public void ShowBrowser()
     {
+        PlayUISound(panelOpenClip);
+
         SetPanel(Header, true);
         SetPanel(homePanel, false);
         SetPanel(ipPanel, false);
@@ -164,19 +227,19 @@ public class ComputerHomeUI : MonoBehaviour
     {
         if (device == null)
         {
-            SetNetworkStatus("", iconDisconnected, normalColor);
+            SetNetworkStatus("", iconDisconnected, gadaColor, NetworkSoundState.Disconnected);
             return;
         }
 
         if (!device.isConnected)
         {
-            SetNetworkStatus("", iconDisconnected, normalColor);
+            SetNetworkStatus("", iconDisconnected, gadaColor, NetworkSoundState.Disconnected);
             return;
         }
 
         if (!device.ipConfigValid)
         {
-            SetNetworkStatus("Unidentified network", iconWarning, normalColor);
+            SetNetworkStatus("Unidentified network", iconWarning, normalColor, NetworkSoundState.Warning);
             return;
         }
 
@@ -186,51 +249,52 @@ public class ComputerHomeUI : MonoBehaviour
 
         if (wireless == null)
         {
-            SetNetworkStatus("LAN connected", iconLanConnected, normalColor);
+            SetNetworkStatus("LAN connected", iconLanConnected, normalColor, NetworkSoundState.LanConnected);
             return;
         }
 
         if (!wireless.physicalLinkActive)
         {
-            SetNetworkStatus("LAN connected", iconLanConnected, normalColor);
+            SetNetworkStatus("LAN connected", iconLanConnected, normalColor, NetworkSoundState.LanConnected);
             return;
         }
 
         if (!wireless.ipConfigValid)
         {
-            SetNetworkStatus("Unidentified network", iconWarning, normalColor);
+            SetNetworkStatus("Unidentified network", iconWarning, normalColor, NetworkSoundState.Warning);
             return;
         }
 
         if (!TryParseIP(device.ipAddress, out uint computerIP))
         {
-            SetNetworkStatus("Unidentified network", iconWarning, normalColor);
+            SetNetworkStatus("Unidentified network", iconWarning, normalColor, NetworkSoundState.Warning);
             return;
         }
 
         if (!TryParseIP(device.netmask, out uint computerMask))
         {
-            SetNetworkStatus("Unidentified network", iconWarning, normalColor);
+            SetNetworkStatus("Unidentified network", iconWarning, normalColor, NetworkSoundState.Warning);
             return;
         }
 
         if (!TryParseIP(wireless.ipAddress, out uint nanoIP))
         {
-            SetNetworkStatus("Unidentified network", iconWarning, normalColor);
+            SetNetworkStatus("Unidentified network", iconWarning, normalColor, NetworkSoundState.Warning);
             return;
         }
 
         if (!IsSameSubnet(computerIP, nanoIP, computerMask))
         {
-            SetNetworkStatus("Unidentified network", iconWarning, normalColor);
+            SetNetworkStatus("Unidentified network", iconWarning, normalColor, NetworkSoundState.Warning);
             return;
         }
 
-        SetNetworkStatus("Connected", iconConnected, connectedColor);
+        SetNetworkStatus("Connected", iconConnected, connectedColor, NetworkSoundState.Connected);
     }
 
-    private void SetNetworkStatus(string message, Sprite icon, Color color)
+    private void SetNetworkStatus(string message, Sprite icon, Color color, NetworkSoundState state = NetworkSoundState.Unknown)
     {
+        PlayNetworkStateSound(state);
         if (connectionStatusText != null)
         {
             connectionStatusText.text = message;
@@ -290,6 +354,7 @@ public class ComputerHomeUI : MonoBehaviour
     {
         if (device == null)
         {
+            PlayUISound(errorClip);
             Debug.LogWarning("ComputerDevice belum dipasang.");
             return;
         }
@@ -316,11 +381,16 @@ public class ComputerHomeUI : MonoBehaviour
 
         Debug.Log("IP Config Applied");
 
+        PlayUISound(applyClip);
+        PlayUISound(successClip);
+
         UpdateNetworkStatus();
     }
 
     public void OnClickCancelIPConfig()
     {
+        PlayUISound(cancelClip);
+
         LoadIPConfigFromDevice();
         ShowHome();
         UpdateNetworkStatus();
@@ -330,6 +400,8 @@ public class ComputerHomeUI : MonoBehaviour
 
     public void OnClickPing()
     {
+        PlayUISound(pingStartClip);
+
         UpdateNetworkStatus();
 
         if (pingCoroutine != null)
@@ -348,6 +420,7 @@ public class ComputerHomeUI : MonoBehaviour
 
         if (device == null)
         {
+            PlayUISound(errorClip);
             AppendPingLine("ComputerDevice belum dipasang.");
             yield break;
         }
@@ -361,12 +434,14 @@ public class ComputerHomeUI : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(target))
         {
+            PlayUISound(errorClip);
             AppendPingLine("Masukkan alamat IP tujuan terlebih dahulu.");
             yield break;
         }
 
         if (!TryParseIP(target, out uint targetIP))
         {
+            PlayUISound(errorClip);
             AppendPingLine("Ping request could not find host " + target + ".");
             AppendPingLine("Please check the name and try again.");
             yield break;
@@ -386,11 +461,13 @@ public class ComputerHomeUI : MonoBehaviour
             {
                 int time = Random.Range(1, 5);
                 AppendPingLine("Reply from " + target + ": bytes=32 time<" + time + "ms TTL=64");
+                PlayUISound(pingReplyClip);
                 received++;
             }
             else
             {
                 AppendPingLine(failMessage);
+                PlayUISound(pingFailClip);
             }
 
             yield return new WaitForSeconds(pingLineDelay);
@@ -524,6 +601,8 @@ public class ComputerHomeUI : MonoBehaviour
 
     public void OnClickOpenBrowserAddress()
     {
+        PlayUISound(clickClip);
+
         HideBrowserResults();
         UpdateNetworkStatus();
 
@@ -642,6 +721,9 @@ public class ComputerHomeUI : MonoBehaviour
 
     private void OpenNanoUI(string address, WirelessDevice targetNano)
     {
+        PlayUISound(browserOpenClip);
+        PlayUISound(successClip);
+
         if (browserResultText != null)
         {
             browserResultText.text = "Halaman berhasil dibuka: " + address;
@@ -675,6 +757,8 @@ public class ComputerHomeUI : MonoBehaviour
 
     private void ShowBrowserError(string message)
     {
+        PlayUISound(errorClip);
+
         if (browserResultText != null)
         {
             browserResultText.text = message;
@@ -702,6 +786,122 @@ public class ComputerHomeUI : MonoBehaviour
         }
 
         UpdateNetworkStatus();
+    }
+
+    // ================= AUDIO HELPER =================
+
+    private void InitAudio()
+    {
+        if (audioSource == null && autoFindAudioSource)
+        {
+            audioSource = GetComponent<AudioSource>();
+
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+
+        if (audioSource != null)
+        {
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f;
+        }
+    }
+
+    private void RegisterButtonSounds()
+    {
+        if (!autoRegisterButtonSound) return;
+
+        Button[] childButtons = GetComponentsInChildren<Button>(true);
+
+        for (int i = 0; i < childButtons.Length; i++)
+        {
+            RegisterButtonSound(childButtons[i]);
+        }
+
+        if (extraButtons != null)
+        {
+            for (int i = 0; i < extraButtons.Length; i++)
+            {
+                RegisterButtonSound(extraButtons[i]);
+            }
+        }
+    }
+
+    private void RegisterButtonSound(Button button)
+    {
+        if (button == null) return;
+        if (registeredSoundButtons.Contains(button)) return;
+
+        registeredSoundButtons.Add(button);
+
+        EventTrigger trigger = button.GetComponent<EventTrigger>();
+
+        if (trigger == null)
+        {
+            trigger = button.gameObject.AddComponent<EventTrigger>();
+        }
+
+        EventTrigger.Entry hoverEntry = new EventTrigger.Entry();
+        hoverEntry.eventID = EventTriggerType.PointerEnter;
+        hoverEntry.callback.AddListener((data) =>
+        {
+            if (button.interactable)
+            {
+                PlayUISound(hoverClip);
+            }
+        });
+
+        EventTrigger.Entry clickEntry = new EventTrigger.Entry();
+        clickEntry.eventID = EventTriggerType.PointerClick;
+        clickEntry.callback.AddListener((data) =>
+        {
+            if (button.interactable)
+            {
+                PlayUISound(clickClip);
+            }
+        });
+
+        trigger.triggers.Add(hoverEntry);
+        trigger.triggers.Add(clickEntry);
+    }
+
+    private void PlayUISound(AudioClip clip, float volumeScale = 1f)
+    {
+        if (!enableUISound) return;
+        if (isInitializing) return;
+        if (clip == null) return;
+        if (audioSource == null) return;
+
+        audioSource.PlayOneShot(clip, uiVolume * volumeScale);
+    }
+
+    private void PlayNetworkStateSound(NetworkSoundState state)
+    {
+        if (state == NetworkSoundState.Unknown) return;
+        if (state == lastNetworkSoundState) return;
+
+        lastNetworkSoundState = state;
+
+        switch (state)
+        {
+            case NetworkSoundState.Connected:
+                PlayUISound(connectedClip);
+                break;
+
+            case NetworkSoundState.Warning:
+                PlayUISound(warningClip);
+                break;
+
+            case NetworkSoundState.LanConnected:
+                PlayUISound(lanConnectedClip);
+                break;
+
+            case NetworkSoundState.Disconnected:
+                PlayUISound(disconnectedClip);
+                break;
+        }
     }
 
     // ================= IP HELPER =================
