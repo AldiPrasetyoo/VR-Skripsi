@@ -161,7 +161,7 @@ public class UI_WirelessDevice : MonoBehaviour
         // Device akan dikirim dari ComputerHomeUI setelah browser berhasil akses IP Nano.
 
         SetPanel(selectDevicePanel, false);
-        SetPanel(loginPanel, false);
+        SetPanel(loginPanel, true);
         SetPanel(mainUI, false);
         SetPanel(navbarPanel, false);
         SetPanel(mainPanel, false);

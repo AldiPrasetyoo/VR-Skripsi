@@ -50,9 +50,9 @@ public class WirelessDevice : MonoBehaviour
     public NetworkMode networkMode = NetworkMode.Bridge;
     public bool disableNetwork;
 
-    public string netmask = "0.0.0.0";
-    public string primaryDNS = "0.0.0.0";
-    public string secondaryDNS = "0.0.0.0";
+    public string netmask = "255.255.255.0";
+    public string primaryDNS = "8.8.8.8";
+    public string secondaryDNS = "8.8.4.4";
     public int mtu = 1500;
 
     // ================= POWER =================

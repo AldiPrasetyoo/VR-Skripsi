@@ -130,7 +130,7 @@ MonoBehaviour:
   <ConnectedTo>k__BackingField: {fileID: 0}
   connectionPoint: {fileID: 1475163110706425808}
   collorRenderer: {fileID: 4297795676877930918}
-  sparksParticle: {fileID: 6240808514098397942}
+  sparksParticle: {fileID: 0}
   disconnectDistance: 0.15
 --- !u!54 &6723270890061049430
 Rigidbody:
@@ -417,7 +417,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7069834, y: 0, z: 0, w: 0.7072302}
   m_LocalPosition: {x: -0, y: 0, z: 0}
-  m_LocalScale: {x: 150, y: 149.99997, z: 149.99997}
+  m_LocalScale: {x: 149.99998, y: 149.99997, z: 149.99998}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6176965784595956828}
@@ -531,14 +531,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 306f8375af67bb948a8ed61bc8fa7bec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  deviceName: 
   networkDevice: {fileID: 0}
   isConnected: 0
+  physicalLinkActive: 0
+  ipConfigValid: 0
+  networkValid: 0
+  gatewayReachable: 0
+  dnsValid: 0
   hasInternet: 0
+  ipConflict: 0
+  networkMessage: 
   ipAddress: 0.0.0.0
   gateway: 0.0.0.0
-  netmask: 255.255.255.0
-  networkValid: 0
+  netmask: 0.0.0.0
+  dns: 0.0.0.0
   lanConnector: {fileID: 6929670886098533833}
   lanStatus: Unplugged
 --- !u!1 &7058312472938938678

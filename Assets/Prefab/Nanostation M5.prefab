@@ -247,7 +247,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.74524915, y: 0, z: 0, w: 0.6667862}
   m_LocalPosition: {x: -2.877, y: 1.543, z: -1.463}
-  m_LocalScale: {x: 0.8599998, y: 0.17356867, z: 0.7646516}
+  m_LocalScale: {x: 0.6897571, y: 0.17356867, z: 0.5180687}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6211373110546299995}
@@ -593,8 +593,8 @@ MonoBehaviour:
   lan1Mac: 
   networkMode: 0
   disableNetwork: 0
-  netmask: 0.0.0.0
-  primaryDNS: 0.0.0.0
+  netmask: 255.255.255.0
+  primaryDNS: 8.8.8.8
   secondaryDNS: 0.0.0.0
   mtu: 1500
   hasPower: 0
@@ -621,7 +621,7 @@ MonoBehaviour:
   airMaxCapacity: 100
   lan0Status: Unplugged
   lan1Status: Unplugged
-  ssid: Airnet
+  ssid: 
   password: 
   WDS: 1
   countryCode: Indonesia
@@ -663,9 +663,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Item
   itemName: Nano
-  slotRotation: {x: 0, y: 0, z: 0}
-  grabScale: 0.3
-  inventoryScale: 0.5
+  slotRotation: {x: -90, y: 0, z: 20}
+  grabScale: 0.25
+  inventoryScale: 0.25
   inSlot: 0
   currentSlot: {fileID: 0}
 --- !u!1 &1237113066810893099
@@ -864,7 +864,7 @@ MonoBehaviour:
   <ConnectedTo>k__BackingField: {fileID: 0}
   connectionPoint: {fileID: 4815491326652751874}
   collorRenderer: {fileID: 4459967312413033764}
-  sparksParticle: {fileID: 5849576044342901376}
+  sparksParticle: {fileID: 0}
   disconnectDistance: 0.15
 --- !u!54 &2205213584193892051
 Rigidbody:
@@ -11039,7 +11039,7 @@ MonoBehaviour:
   <ConnectedTo>k__BackingField: {fileID: 0}
   connectionPoint: {fileID: 948555374608988360}
   collorRenderer: {fileID: 62261787709406518}
-  sparksParticle: {fileID: 5054161984910276425}
+  sparksParticle: {fileID: 0}
   disconnectDistance: 0.15
 --- !u!54 &3341805602279357377
 Rigidbody:

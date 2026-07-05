@@ -384,7 +384,7 @@ MonoBehaviour:
   <ConnectedTo>k__BackingField: {fileID: 0}
   connectionPoint: {fileID: 2809423890301337358}
   collorRenderer: {fileID: 2559427999511283868}
-  sparksParticle: {fileID: 4504145123681339345}
+  sparksParticle: {fileID: 0}
   disconnectDistance: 0.15
 --- !u!54 &4232375657542352397
 Rigidbody:
@@ -561,7 +561,7 @@ MonoBehaviour:
   <ConnectedTo>k__BackingField: {fileID: 0}
   connectionPoint: {fileID: 4811864552079666434}
   collorRenderer: {fileID: 7218036762672186177}
-  sparksParticle: {fileID: 3670974185231478050}
+  sparksParticle: {fileID: 0}
   disconnectDistance: 0.15
 --- !u!54 &825469481117792273
 Rigidbody:
@@ -11346,7 +11346,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb8e91cfb0763f6468009f3ce26dbaf5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Item
-  itemName: 
+  itemName: PoE
   slotRotation: {x: 0, y: 0, z: 0}
   grabScale: 0.5
   inventoryScale: 0.5

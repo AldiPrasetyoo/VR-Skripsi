@@ -202,46 +202,29 @@ public class InputManagerPlayer : MonoBehaviour
 
         string newSubtitle = "";
 
-
-
-        if(time >= 0.5f && time < 12f)
+        if(time >= 0.5f && time < 4f)
         {
-
-            newSubtitle =
-            "Selamat datang di simulasi jaringan wireless.";
-
+            newSubtitle = "Selamat datang di simulasi jaringan wireless.";
         }
-
+        else if(time >= 4.5f && time < 13f)
+        {
+            newSubtitle = "Perhatikan area di sekitar Anda. Tugas Anda adalah menyelesaikan masalah konektivitas antar bangunan.";
+        }
         else if(time >= 15.5f && time < 23f)
         {
-
-            newSubtitle =
-            "Gedung 1 adalah pusat jaringan dengan sumber internet utama.";
-
+            newSubtitle = "Lihat Gedung 1 di depan Anda. Gedung ini akan berfungsi sebagai pusat jaringan dan sumber internet utama.";
         }
-
         else if(time >= 25f && time < 35f)
         {
-
-            newSubtitle =
-            "Gedung 2 adalah gedung yang belum mendapatkan akses internet.";
-
+            newSubtitle = "Namun, Gedung 2 di seberang sana saat ini belum terjangkau oleh jaringan internet.";
         }
-
         else if(time >= 37f && time < 44f)
         {
-
-            newSubtitle =
-            "Kedua gedung perlu dihubungkan secara Point To Point sehingga dapat saling terhubung.";
-
+            newSubtitle = "Kita perlu menghubungkan kedua gedung ini menggunakan topologi jaringan Point-to-Point.";
         }
-
-        else if(time >= 44f && time < 50f)
+        else if(time >= 44f && time < 49.5f)
         {
-
-            newSubtitle =
-            "Selesaikan konfigurasi agar jaringan berhasil terhubung.";
-
+            newSubtitle = "Selesaikan konfigurasi pada perangkat agar internet dapat terdistribusi ke Gedung 2.";
         }
 
 

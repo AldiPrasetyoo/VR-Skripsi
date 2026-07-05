@@ -47,7 +47,7 @@ public class Slot : MonoBehaviour
         hoveringItem = other.gameObject;
 
 
-        slotImage.color = Color.green;
+        slotImage.color = Color.white;
 
 
     }
@@ -153,11 +153,21 @@ public class Slot : MonoBehaviour
         item.slotRotation;
 
 
+item.inSlot = true;
 
-        item.inSlot = true;
+item.currentSlot = this;
 
 
-        item.currentSlot = this;
+CableInventoryHandler cable =
+obj.GetComponent<CableInventoryHandler>();
+
+
+if(cable != null)
+{
+
+    cable.SetSlot(this);
+
+}
 
 
         item.OnInventory();

@@ -80,20 +80,30 @@ namespace HPhysic
         {
             isGrabbed = false;
 
-            if (nearestSlot != null)
-            {
-                nearestSlot.AttachDevice(gameObject);
-                currentSlot = nearestSlot;
+            TowerMountSlot[] slots = FindObjectsOfType<TowerMountSlot>();
 
-                if (ghost != null)
-                    Destroy(ghost);
-            }
-            else
+            foreach (TowerMountSlot slot in slots)
             {
-                // dilepas di udara
-                rb.isKinematic = false;
-                rb.useGravity = true;
+                if (slot.occupied)
+                    continue;
+
+                if (slot.IsInsideGhostArea(transform.position))
+                {
+                    slot.AttachDevice(gameObject);
+                    currentSlot = slot;
+
+                    if (ghost != null)
+                    {
+                        Destroy(ghost);
+                        ghost = null;
+                    }
+
+                    return;
+                }
             }
+
+            rb.isKinematic = false;
+            rb.useGravity = true;
         }
 
         // =========================

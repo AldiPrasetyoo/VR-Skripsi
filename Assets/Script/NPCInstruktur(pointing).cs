@@ -17,6 +17,9 @@ public class NPCInstructorPointing : MonoBehaviour
     public Color normalColor = new Color32(0,168,255,255);
     public Color hoverColor = new Color32(0,217,255,255);
 
+    [Header("Player Lock")]
+    public GameObject playerObject;
+
 
     [Header("NPC Voice")]
     public AudioSource voiceSource;
@@ -68,7 +71,42 @@ public class NPCInstructorPointing : MonoBehaviour
         "Pastikan pemasangan perangkat, arah antenna, serta konfigurasi jaringan dilakukan dengan benar.",
 
 
-        "Jika sudah memahami instruksi awal, silahkan lanjutkan dan mulai menyelesaikan misi jaringan Point To Point."
+        "Jika sudah memahami instruksi awal, silahkan lanjutkan dan mulai menyelesaikan misi jaringan Point To Point.",
+
+
+
+        "Untuk memulai simulasi, silahkan menuju lokasi Gedung 1 yang telah ditandai pada peta.",
+
+
+        "Setelah sampai di Gedung 1, gunakan titik teleport berwarna hijau untuk menuju area pemasangan di bagian atas gedung.",
+
+
+        "Pada area Gedung 1 terdapat lokasi pemasangan perangkat dan sebuah tower yang dapat digunakan dalam simulasi.",
+
+
+        "Tower tersebut memiliki fitur pengaturan ketinggian yang dapat digunakan sesuai kebutuhan simulasi.",
+
+        "Untuk mengatur ketinggian tower, gunakan tombol yang tersedia pada perangkat tower tersebut.",
+
+
+
+        "Setelah menyelesaikan tahapan pada Gedung 1, lanjutkan menuju Gedung 2 melalui jalur yang tersedia.",
+
+
+        "Gunakan peta sebagai panduan untuk menemukan lokasi Gedung 2.",
+
+
+        "Untuk menuju area pemasangan di Gedung 2, masuk terlebih dahulu ke ruangan lift yang tersedia.",
+
+
+        "Pencet tombol lift sesuai dengan lantai yang ingin dikunjungi.",
+
+
+
+        "Perhatikan setiap perangkat yang tersedia dan gunakan pemahaman jaringan Point To Point untuk menyelesaikan simulasi.",
+
+
+        "Selamat menyelesaikan simulasi jaringan wireless."
 
     };
 
@@ -79,7 +117,7 @@ public class NPCInstructorPointing : MonoBehaviour
     void Start()
     {
 
-
+        LockPlayer();
         dialogPanel.SetActive(true);
 
 
@@ -90,6 +128,36 @@ public class NPCInstructorPointing : MonoBehaviour
 
 
         ShowDialog();
+
+    }
+
+    void LockPlayer()
+    {
+
+        if(playerObject != null)
+        {
+
+            playerObject.SetActive(false);
+
+        }
+
+
+        Debug.Log("Player dikunci");
+
+    }
+
+    void UnlockPlayer()
+    {
+
+        if(playerObject != null)
+        {
+
+            playerObject.SetActive(true);
+
+        }
+
+
+        Debug.Log("Player aktif kembali");
 
     }
 
@@ -212,6 +280,7 @@ public class NPCInstructorPointing : MonoBehaviour
         {
 
             dialogPanel.SetActive(false);
+            UnlockPlayer();
 
             return;
 

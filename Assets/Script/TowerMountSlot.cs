@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 
 namespace HPhysic
 {
@@ -9,12 +10,22 @@ namespace HPhysic
         [Header("Nomor Titik Tower")]
         public int nomorSlot = 2;
 
-        [Header("Ghost Position")]
+        [Header("Mount Point (Posisi Asli Device)")]
+        public Transform mountPoint;
+
+        [Header("Ghost Point (Preview)")]
         public Transform ghostPoint;
+
+        [Header("Detection")]
+        public float detectRadius = 0.3f;
 
         private Renderer rend;
         private Color originalColor;
-
+        private GameObject ghost;
+        private GameObject marker;
+        private Renderer markerRenderer;
+        private XRGrabInteractable grabbedDevice;
+        private Color normalMarker = Color.cyan;
         private GameObject attachedDevice;
 
         void Start()
@@ -24,30 +35,183 @@ namespace HPhysic
             if (rend != null)
                 originalColor = rend.material.color;
 
+            // AUTO CREATE MOUNT POINT
+            if (mountPoint == null)
+            {
+                GameObject point = new GameObject("MountPoint");
+                point.transform.SetParent(transform);
+                point.transform.localPosition = Vector3.zero;
+                point.transform.localRotation = Quaternion.identity;
+                mountPoint = point.transform;
+            }
+
+            // AUTO CREATE GHOST POINT
             if (ghostPoint == null)
-                ghostPoint = transform;
+            {
+                GameObject point = new GameObject("GhostPoint");
+                point.transform.SetParent(transform);
+                point.transform.localPosition = Vector3.zero;
+                point.transform.localRotation = Quaternion.identity;
+                ghostPoint = point.transform;
+            }
+        }
+
+        void Update()
+        {
+            grabbedDevice = FindGrabbedDevice();
+
+            if (occupied)
+            {
+                DestroyGhost();
+                DestroyMarker();
+                Highlight(false);
+                return;
+            }
+
+            if (grabbedDevice == null)
+            {
+                DestroyMarker();
+                DestroyGhost();
+                return;
+            }
+            
+            CreateMarker();
+
+            float distance = Vector3.Distance(grabbedDevice.transform.position, ghostPoint.position);
+
+            if (distance <= detectRadius)
+            {
+                ShowGhost(grabbedDevice.gameObject);
+                Highlight(true);
+            }
+            else
+            {
+                DestroyGhost();
+                Highlight(false);
+            }
+        }
+
+        XRGrabInteractable FindGrabbedDevice()
+        {
+            XRGrabInteractable[] all = FindObjectsOfType<XRGrabInteractable>();
+
+            foreach (var item in all)
+            {
+                if (item.interactorsSelecting.Count == 0)
+                    continue;
+
+                WirelessDevice device = item.GetComponent<WirelessDevice>();
+
+                if (device == null)
+                    continue;
+
+                return item;
+            }
+
+            return null;
+        }
+
+        void CreateMarker()
+        {
+            if (marker != null)
+                return;
+
+            marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            marker.name = "Tower_Marker";
+            marker.transform.SetParent(ghostPoint);
+            marker.transform.localPosition = new Vector3(0, 0, 0.1f);
+            marker.transform.localScale = Vector3.one * 0.15f;
+
+            Destroy(marker.GetComponent<Collider>());
+
+            markerRenderer = marker.GetComponent<Renderer>();
+            markerRenderer.material.color = normalMarker;
+        }
+
+        public bool IsInsideGhostArea(Vector3 position)
+        {
+            if (ghostPoint == null)
+                return false;
+
+            return Vector3.Distance(position, ghostPoint.position) <= detectRadius;
+        }
+
+        void ShowGhost(GameObject device)
+        {
+            if (ghost != null)
+                return;
+
+            ghost = Instantiate(device);
+            ghost.name = "Tower_GhostPreview";
+            ghost.transform.position = ghostPoint.position;
+            ghost.transform.rotation = ghostPoint.rotation;
+            ghost.transform.SetParent(ghostPoint);
+
+            foreach (Collider c in ghost.GetComponentsInChildren<Collider>())
+            {
+                c.enabled = false;
+            }
+
+            Rigidbody rb = ghost.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = true;
+                rb.useGravity = false;
+            }
+
+            foreach (MonoBehaviour m in ghost.GetComponents<MonoBehaviour>())
+            {
+                m.enabled = false;
+            }
+        }
+
+        void DestroyGhost()
+        {
+            if (ghost != null)
+            {
+                Destroy(ghost);
+                ghost = null;
+            }
+        }
+
+        void DestroyMarker()
+        {
+            if (marker != null)
+            {
+                Destroy(marker);
+                marker = null;
+                markerRenderer = null;
+            }
         }
 
         public void Highlight(bool active)
         {
-            if (rend == null) return;
+            if (rend == null)
+                return;
 
             rend.material.color = active ? Color.green : originalColor;
         }
 
         public void AttachDevice(GameObject device)
         {
-            if (device == null) return;
+            if (device == null)
+                return;
 
             occupied = true;
             attachedDevice = device;
 
-            // Snap ke posisi ghost tanpa dijadikan child
-            device.transform.position = ghostPoint.position;
-            device.transform.rotation = ghostPoint.rotation;
+            if (mountPoint != null)
+            {
+                device.transform.position = mountPoint.position;
+                device.transform.rotation = mountPoint.rotation;
+            }
+            else
+            {
+                device.transform.position = transform.position;
+                device.transform.rotation = transform.rotation;
+            }
 
             Rigidbody rb = device.GetComponent<Rigidbody>();
-
             if (rb != null)
             {
                 rb.linearVelocity = Vector3.zero;
@@ -56,7 +220,6 @@ namespace HPhysic
                 rb.useGravity = false;
             }
 
-            // Cek misi setelah device berhasil dipasang
             CekMisiPemasangan(device);
         }
 
@@ -82,18 +245,12 @@ namespace HPhysic
             WirelessDevice wirelessDevice = device.GetComponent<WirelessDevice>();
 
             if (wirelessDevice == null)
-            {
-                Debug.LogWarning("Object yang dipasang bukan WirelessDevice.");
                 return;
-            }
 
             SensorGedung sensorGedung = CariSensorGedungDariParent();
 
             if (sensorGedung == null)
-            {
-                Debug.LogWarning("TowerMountSlot tidak menemukan SensorGedung di area gedung.");
                 return;
-            }
 
             if (ManagerMisi.Instance != null)
             {
@@ -102,10 +259,6 @@ namespace HPhysic
                     sensorGedung.idZonaGedung,
                     nomorSlot
                 );
-            }
-            else
-            {
-                Debug.LogWarning("ManagerMisi.Instance tidak ditemukan.");
             }
         }
 
@@ -118,7 +271,6 @@ namespace HPhysic
             }
 
             Rigidbody rb = attachedDevice.GetComponent<Rigidbody>();
-
             if (rb != null)
             {
                 rb.isKinematic = false;

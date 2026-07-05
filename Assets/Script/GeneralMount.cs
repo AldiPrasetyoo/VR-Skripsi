@@ -10,9 +10,6 @@ namespace HPhysic
         private Rigidbody rb;
 
         private GeneralMountSlot currentSlot;
-        private GeneralMountSlot nearestSlot;
-
-        private GameObject ghost;
 
         private bool isGrabbed;
 
@@ -33,20 +30,25 @@ namespace HPhysic
 
         private void Update()
         {
-            if (currentSlot != null && isGrabbed)
-            {
-                RotateDevice();
-            }
+            if (!isGrabbed)
+                return;
+
+            RotateDevice();
+
+            HighlightNearestSlot();
         }
 
         private void RotateDevice()
         {
-            InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+            InputDevice device =
+                InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
 
             if (device.TryGetFeatureValue(CommonUsages.primary2DAxis, out Vector2 axis))
             {
-                float rotate = axis.x * rotateSpeed * Time.deltaTime;
-                transform.Rotate(Vector3.up, rotate);
+                transform.Rotate(
+                    Vector3.up,
+                    axis.x * rotateSpeed * Time.deltaTime
+                );
             }
         }
 
@@ -73,15 +75,12 @@ namespace HPhysic
         {
             isGrabbed = false;
 
-            if (nearestSlot != null)
-            {
-                nearestSlot.AttachDevice(gameObject);
-                currentSlot = nearestSlot;
+            GeneralMountSlot slot = FindNearestSlot();
 
-                if (ghost != null)
-                {
-                    Destroy(ghost);
-                }
+            if (slot != null)
+            {
+                slot.AttachDevice(gameObject);
+                currentSlot = slot;
             }
             else
             {
@@ -91,80 +90,60 @@ namespace HPhysic
                     rb.useGravity = true;
                 }
             }
+
+            ResetAllHighlight();
         }
 
-        private void OnTriggerStay(Collider other)
+        private GeneralMountSlot FindNearestSlot()
         {
-            GeneralMountSlot slot = other.GetComponent<GeneralMountSlot>();
+            GeneralMountSlot[] slots =
+                FindObjectsOfType<GeneralMountSlot>();
 
-            if (slot == null) return;
-            if (slot.occupied) return;
+            GeneralMountSlot nearest = null;
 
-            nearestSlot = slot;
-            slot.Highlight(true);
+            float closest = Mathf.Infinity;
 
-            ShowGhost(slot);
+            foreach (GeneralMountSlot slot in slots)
+            {
+                if (slot.occupied)
+                    continue;
+
+                if (slot.ghostPoint == null)
+                    continue;
+
+                float dis =
+                    Vector3.Distance(
+                        transform.position,
+                        slot.ghostPoint.position);
+
+                if (dis <= slot.detectRadius && dis < closest)
+                {
+                    closest = dis;
+                    nearest = slot;
+                }
+            }
+
+            return nearest;
         }
 
-        private void OnTriggerExit(Collider other)
+        private void HighlightNearestSlot()
         {
-            GeneralMountSlot slot = other.GetComponent<GeneralMountSlot>();
+            ResetAllHighlight();
+
+            GeneralMountSlot slot = FindNearestSlot();
 
             if (slot != null)
             {
-                slot.Highlight(false);
-            }
-
-            if (ghost != null)
-            {
-                Destroy(ghost);
-            }
-
-            if (slot == nearestSlot)
-            {
-                nearestSlot = null;
+                slot.Highlight(true);
             }
         }
 
-        private void ShowGhost(GeneralMountSlot slot)
+        private void ResetAllHighlight()
         {
-            if (ghost != null) return;
-            if (slot.mountPoint == null) return;
-
-            ghost = Instantiate(gameObject);
-
-            GeneralMount ghostMount = ghost.GetComponent<GeneralMount>();
-            if (ghostMount != null)
+            foreach (GeneralMountSlot slot in FindObjectsOfType<GeneralMountSlot>())
             {
-                Destroy(ghostMount);
+                slot.Highlight(false);
             }
-
-            XRGrabInteractable ghostGrab = ghost.GetComponent<XRGrabInteractable>();
-            if (ghostGrab != null)
-            {
-                Destroy(ghostGrab);
-            }
-
-            Rigidbody ghostRb = ghost.GetComponent<Rigidbody>();
-            if (ghostRb != null)
-            {
-                Destroy(ghostRb);
-            }
-
-            foreach (Collider c in ghost.GetComponentsInChildren<Collider>())
-            {
-                Destroy(c);
-            }
-
-            foreach (Renderer r in ghost.GetComponentsInChildren<Renderer>())
-            {
-                Color color = r.material.color;
-                color.a = 0.3f;
-                r.material.color = color;
-            }
-
-            ghost.transform.position = slot.mountPoint.position;
-            ghost.transform.rotation = slot.mountPoint.rotation;
         }
     }
 }

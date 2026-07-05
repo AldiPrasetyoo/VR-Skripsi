@@ -70,14 +70,14 @@ public class MainMenuSettingManager : MonoBehaviour
 
     public void SetQuality(int index)
     {
-        QualitySettings.SetQualityLevel(index);
+        GameSettingManager.Instance.SetQuality(index);
         PlayerPrefs.SetInt(QualityKey, index);
         PlayerPrefs.Save();
     }
 
     public void SetVolume(float value)
     {
-        AudioListener.volume = value;
+        GameSettingManager.Instance.SetVolume(value);
         PlayerPrefs.SetFloat(VolumeKey, value);
         PlayerPrefs.Save();
 
