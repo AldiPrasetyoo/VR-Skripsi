@@ -19,6 +19,13 @@ namespace HPhysic
         [Header("Detection")]
         public float detectRadius = 0.3f;
 
+        [Header("VR Marker Fix")]
+        [Tooltip("Masukkan prefab Sphere yang sudah ada materialnya.")]
+        public GameObject markerPrefab;
+        
+        [Tooltip("Opsional jika tidak pakai prefab.")]
+        public Material vrReadyMaterial;
+
         private Renderer rend;
         private Color originalColor;
         private GameObject ghost;
@@ -35,21 +42,19 @@ namespace HPhysic
             if (rend != null)
                 originalColor = rend.material.color;
 
-            // AUTO CREATE MOUNT POINT
             if (mountPoint == null)
             {
                 GameObject point = new GameObject("MountPoint");
-                point.transform.SetParent(transform);
+                point.transform.SetParent(transform, false);
                 point.transform.localPosition = Vector3.zero;
                 point.transform.localRotation = Quaternion.identity;
                 mountPoint = point.transform;
             }
 
-            // AUTO CREATE GHOST POINT
             if (ghostPoint == null)
             {
                 GameObject point = new GameObject("GhostPoint");
-                point.transform.SetParent(transform);
+                point.transform.SetParent(transform, false);
                 point.transform.localPosition = Vector3.zero;
                 point.transform.localRotation = Quaternion.identity;
                 ghostPoint = point.transform;
@@ -93,7 +98,7 @@ namespace HPhysic
 
         XRGrabInteractable FindGrabbedDevice()
         {
-            XRGrabInteractable[] all = FindObjectsOfType<XRGrabInteractable>();
+            XRGrabInteractable[] all = FindObjectsByType<XRGrabInteractable>(FindObjectsSortMode.None);
 
             foreach (var item in all)
             {
@@ -116,16 +121,38 @@ namespace HPhysic
             if (marker != null)
                 return;
 
-            marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            marker.name = "Tower_Marker";
-            marker.transform.SetParent(ghostPoint);
+            if (markerPrefab != null)
+            {
+                marker = Instantiate(markerPrefab, ghostPoint); // Pemasangan parent yang benar
+                marker.name = "Tower_Marker";
+            }
+            else
+            {
+                marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                marker.name = "Tower_Marker";
+                marker.transform.SetParent(ghostPoint, false);
+            }
+
+            // Hancurkan collider dari marker secara paksa agar tidak memblokir device saat dilepas (Mount)
+            foreach (Collider c in marker.GetComponentsInChildren<Collider>())
+            {
+                Destroy(c);
+            }
+
             marker.transform.localPosition = new Vector3(0, 0, 0.1f);
             marker.transform.localScale = Vector3.one * 0.15f;
 
-            Destroy(marker.GetComponent<Collider>());
-
             markerRenderer = marker.GetComponent<Renderer>();
-            markerRenderer.material.color = normalMarker;
+
+            if (markerPrefab == null && vrReadyMaterial != null && markerRenderer != null)
+            {
+                markerRenderer.material = vrReadyMaterial;
+            }
+
+            if (markerRenderer != null)
+            {
+                markerRenderer.material.color = normalMarker;
+            }
         }
 
         public bool IsInsideGhostArea(Vector3 position)
@@ -141,11 +168,11 @@ namespace HPhysic
             if (ghost != null)
                 return;
 
-            ghost = Instantiate(device);
+            // Perbaikan: jadikan child DULU, baru set koordinat lokal ke nol, agar posisinya akurat dan tidak terlempar
+            ghost = Instantiate(device, ghostPoint);
             ghost.name = "Tower_GhostPreview";
-            ghost.transform.position = ghostPoint.position;
-            ghost.transform.rotation = ghostPoint.rotation;
-            ghost.transform.SetParent(ghostPoint);
+            ghost.transform.localPosition = Vector3.zero;
+            ghost.transform.localRotation = Quaternion.identity;
 
             foreach (Collider c in ghost.GetComponentsInChildren<Collider>())
             {

@@ -392,7 +392,7 @@ public class UI_WirelessDevice : MonoBehaviour
                 Destroy(child.gameObject);
         }
 
-        WirelessDevice[] devices = FindObjectsOfType<WirelessDevice>();
+        WirelessDevice[] devices = FindObjectsByType<WirelessDevice>(FindObjectsSortMode.None);
 
         foreach (WirelessDevice d in devices)
         {

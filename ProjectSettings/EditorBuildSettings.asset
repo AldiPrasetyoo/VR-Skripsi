@@ -20,9 +20,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Pembelajaran.unity
     guid: 584ec274bf401ab4ca9ab5604103b5df
+  - enabled: 1
+    path: Assets/Scenes/Fase 3 (Pointing) 1.unity
+    guid: cf0d46d0973e2924ebb7ee9c3a4fd1ad
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: cdaa5f2a093c8ba4a84af5d2f9cd89a1, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: e00a1a3bbfb53fb45997c1e6907a5756, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 61b2f9ba434ca3c4da68c311481c7a5c, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 9680c3118ff2ef04a80d5ba7f2a8172c, type: 2}
   m_UseUCBPForAssetBundles: 0

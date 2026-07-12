@@ -27575,7 +27575,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   femaleConnector: {fileID: 260688583}
   ghostPoint: {fileID: 1690542447}
-  detectRadius: 0.1
 --- !u!114 &260688579
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34389,7 +34388,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   femaleConnector: {fileID: 377801216}
   ghostPoint: {fileID: 1761507843}
-  detectRadius: 0.1
 --- !u!114 &377801212
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -128846,26 +128844,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1415183950}
   m_CullTransparentMesh: 1
---- !u!1 &1415583049 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2049226663236129109, guid: 18457f3651182564a82baf4c1b4a4a95, type: 3}
-  m_PrefabInstance: {fileID: 393655912187473651}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1415583051
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1415583049}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 361814a47390c17428bf7bdef7a8586f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InventoryVR
-  Inventory: {fileID: 1594243828}
-  Anchor: {fileID: 1970531912}
-  inventoryButton: {fileID: -8069514856583376848, guid: 0be0028c24f2a4c14a96b6aa39055933, type: 3}
 --- !u!1001 &1417102373
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -162112,6 +162090,53 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1 &1820907672
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1820907674}
+  - component: {fileID: 1820907673}
+  m_Layer: 0
+  m_Name: inventory
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1820907673
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1820907672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 361814a47390c17428bf7bdef7a8586f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryVR
+  Inventory: {fileID: 1594243828}
+  Anchor: {fileID: 1970531912}
+  inventoryButton: {fileID: -8069514856583376848, guid: 0be0028c24f2a4c14a96b6aa39055933, type: 3}
+--- !u!4 &1820907674
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1820907672}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.8635, y: 1.5, z: -2.0833}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1820953327
 GameObject:
   m_ObjectHideFlags: 0
@@ -188934,6 +188959,14 @@ PrefabInstance:
       propertyPath: items.Array.data[4].itemObject
       value: 
       objectReference: {fileID: 3241520957529280850}
+    - target: {fileID: 3670915352102389053, guid: 18457f3651182564a82baf4c1b4a4a95, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 3.848
+      objectReference: {fileID: 0}
+    - target: {fileID: 3670915352102389053, guid: 18457f3651182564a82baf4c1b4a4a95, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 4.366
+      objectReference: {fileID: 0}
     - target: {fileID: 3676527544629743674, guid: 18457f3651182564a82baf4c1b4a4a95, type: 3}
       propertyPath: m_Material
       value: 
@@ -189023,10 +189056,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4440288558790121035, guid: 18457f3651182564a82baf4c1b4a4a95, type: 3}
       insertIndex: 6
       addedObject: {fileID: 1970531912}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2049226663236129109, guid: 18457f3651182564a82baf4c1b4a4a95, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1415583051}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 18457f3651182564a82baf4c1b4a4a95, type: 3}
 --- !u!114 &396479601358867344
 MonoBehaviour:
@@ -247536,7 +247566,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   femaleConnector: {fileID: 2451675112293733624}
   ghostPoint: {fileID: 8816174414933784946}
-  detectRadius: 0.05
 --- !u!222 &4606301255431355419
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -264438,7 +264467,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   femaleConnector: {fileID: 5290919835522722314}
   ghostPoint: {fileID: 1239142883543123840}
-  detectRadius: 0.05
 --- !u!224 &6096874550421601389
 RectTransform:
   m_ObjectHideFlags: 0
@@ -265537,7 +265565,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   femaleConnector: {fileID: 5474195609508008704}
   ghostPoint: {fileID: 1416225448762195594}
-  detectRadius: 0.05
 --- !u!1 &6208300554557352031
 GameObject:
   m_ObjectHideFlags: 0
@@ -305549,3 +305576,4 @@ SceneRoots:
   - {fileID: 1417102373}
   - {fileID: 1594243829}
   - {fileID: 1580661408}
+  - {fileID: 1820907674}

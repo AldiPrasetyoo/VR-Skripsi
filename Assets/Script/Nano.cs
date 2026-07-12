@@ -80,7 +80,7 @@ namespace HPhysic
         {
             isGrabbed = false;
 
-            TowerMountSlot[] slots = FindObjectsOfType<TowerMountSlot>();
+            TowerMountSlot[] slots = FindObjectsByType<TowerMountSlot>(FindObjectsSortMode.None);
 
             foreach (TowerMountSlot slot in slots)
             {

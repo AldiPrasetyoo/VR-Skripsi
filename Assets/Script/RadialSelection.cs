@@ -165,29 +165,23 @@ public class QuickSpawnItem : MonoBehaviour
 
 
     System.Collections.IEnumerator GrabNextFrame(
-        XRGrabInteractable grab
-    )
+    XRGrabInteractable grab
+)
+{
+    yield return null;
+
+    if (interactionManager == null || interactor == null || grab == null)
+        yield break;
+
+    if (interactor is IXRSelectInteractor selectInteractor &&
+        grab is IXRSelectInteractable selectInteractable)
     {
-
-        yield return null;
-
-
-
-        if(interactor != null &&
-           interactionManager != null)
-        {
-
-
-            interactionManager.SelectEnter(
-                interactor,
-                grab
-            );
-
-
-        }
-
-
+        interactionManager.SelectEnter(
+            selectInteractor,
+            selectInteractable
+        );
     }
+}
 
 
 

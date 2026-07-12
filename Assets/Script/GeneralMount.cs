@@ -97,7 +97,7 @@ namespace HPhysic
         private GeneralMountSlot FindNearestSlot()
         {
             GeneralMountSlot[] slots =
-                FindObjectsOfType<GeneralMountSlot>();
+                FindObjectsByType<GeneralMountSlot>(FindObjectsSortMode.None);
 
             GeneralMountSlot nearest = null;
 
@@ -140,7 +140,7 @@ namespace HPhysic
 
         private void ResetAllHighlight()
         {
-            foreach (GeneralMountSlot slot in FindObjectsOfType<GeneralMountSlot>())
+            foreach (GeneralMountSlot slot in FindObjectsByType<GeneralMountSlot>(FindObjectsSortMode.None))
             {
                 slot.Highlight(false);
             }

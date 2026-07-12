@@ -13,7 +13,7 @@ public class TabletToggleVR : MonoBehaviour
     public Transform tabletSpawnPoint;
 
     [Header("Tangan Kiri Visual")]
-    public GameObject leftHandVisual;
+    public GameObject[] leftHandObjects;
 
     [Header("Ikuti posisi spawn point")]
     public bool followSpawnPoint = true;
@@ -27,8 +27,7 @@ public class TabletToggleVR : MonoBehaviour
         if (tabletObject != null)
             tabletObject.SetActive(false);
 
-        if (leftHandVisual != null)
-            leftHandVisual.SetActive(true);
+        SetLeftHandObjects(true);
     }
 
     private void OnEnable()
@@ -73,8 +72,7 @@ public class TabletToggleVR : MonoBehaviour
         if (tabletObject != null)
             tabletObject.SetActive(isOpen);
 
-        if (leftHandVisual != null)
-            leftHandVisual.SetActive(!isOpen);
+        SetLeftHandObjects(!isOpen);
 
         if (isOpen && tabletSpawnPoint != null && tabletObject != null)
         {
@@ -90,7 +88,19 @@ public class TabletToggleVR : MonoBehaviour
         if (tabletObject != null)
             tabletObject.SetActive(false);
 
-        if (leftHandVisual != null)
-            leftHandVisual.SetActive(true);
+        SetLeftHandObjects(true);
+    }
+
+
+    private void SetLeftHandObjects(bool active)
+    {
+        if (leftHandObjects == null)
+            return;
+
+        foreach (GameObject obj in leftHandObjects)
+        {
+            if (obj != null)
+                obj.SetActive(active);
+        }
     }
 }

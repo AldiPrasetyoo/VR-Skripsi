@@ -17,6 +17,13 @@ namespace HPhysic
         [Header("Detection")]
         public float detectRadius = 0.3f;
 
+        [Header("VR Marker Fix")]
+        [Tooltip("Sangat disarankan: Masukkan prefab Sphere yang sudah ada materialnya dan tanpa collider.")]
+        public GameObject markerPrefab;
+        
+        [Tooltip("Opsional jika tidak pakai prefab: Masukkan material dari project yang support VR Single Pass.")]
+        public Material vrReadyMaterial;
+
         private Renderer rend;
         private Color originalColor;
 
@@ -41,7 +48,7 @@ namespace HPhysic
             if (mountPoint == null)
             {
                 GameObject mp = new GameObject("MountPoint");
-                mp.transform.SetParent(transform);
+                mp.transform.SetParent(transform, false); // Ditambahkan 'false' untuk keamanan hirarki
                 mp.transform.localPosition = Vector3.zero;
                 mp.transform.localRotation = Quaternion.identity;
                 mountPoint = mp.transform;
@@ -50,7 +57,7 @@ namespace HPhysic
             if (ghostPoint == null)
             {
                 GameObject gp = new GameObject("GhostPoint");
-                gp.transform.SetParent(transform);
+                gp.transform.SetParent(transform, false); // Ditambahkan 'false'
                 gp.transform.localPosition = Vector3.zero;
                 gp.transform.localRotation = Quaternion.identity;
                 ghostPoint = gp.transform;
@@ -91,7 +98,7 @@ namespace HPhysic
         XRGrabInteractable FindGrabbedObject()
         {
             XRGrabInteractable[] all =
-                FindObjectsOfType<XRGrabInteractable>();
+                FindObjectsByType<XRGrabInteractable>(FindObjectsSortMode.None);
 
             foreach (var item in all)
             {
@@ -113,23 +120,42 @@ namespace HPhysic
             if (marker != null)
                 return;
 
-            marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            if (markerPrefab != null)
+            {
+                // SOLUSI 1: Pakai Prefab (Paling aman untuk VR Single Pass Instanced)
+                marker = Instantiate(markerPrefab);
+                marker.name = "MountMarker";
+                
+                // Gunakan 'false' agar orientasi lokal tidak terganggu skala dari parent
+                marker.transform.SetParent(ghostPoint, false);
+            }
+            else
+            {
+                // SOLUSI 2: Primitive Object dengan perbaikan SetParent
+                marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                marker.name = "MountMarker";
 
-            marker.name = "MountMarker";
+                // Parameter 'false' krusial di VR agar tidak menarik posisi/skala dari world-space yang salah
+                marker.transform.SetParent(ghostPoint, false);
+                Destroy(marker.GetComponent<Collider>());
+            }
 
-            marker.transform.SetParent(ghostPoint);
-
-            marker.transform.localPosition =
-                new Vector3(0, 0, 0.1f);
-
-            marker.transform.localScale =
-                Vector3.one * 0.15f;
-
-            Destroy(marker.GetComponent<Collider>());
+            // Set posisi lokal dan skala (berlaku untuk kedua solusi)
+            marker.transform.localPosition = new Vector3(0, 0, 0.1f);
+            marker.transform.localScale = Vector3.one * 0.15f;
 
             markerRenderer = marker.GetComponent<Renderer>();
 
-            markerRenderer.material.color = normalMarker;
+            // Jika pakai primitive dan ada material VR-ready yang diset di inspector, timpa material defaultnya
+            if (markerPrefab == null && vrReadyMaterial != null && markerRenderer != null)
+            {
+                markerRenderer.material = vrReadyMaterial;
+            }
+
+            if (markerRenderer != null)
+            {
+                markerRenderer.material.color = normalMarker;
+            }
         }
 
         void ShowGhost(GameObject obj)
@@ -138,7 +164,6 @@ namespace HPhysic
                 return;
 
             ghost = Instantiate(obj);
-
             ghost.name = "GhostPreview";
 
             ghost.transform.position = ghostPoint.position;
@@ -196,14 +221,10 @@ namespace HPhysic
             attachedDevice = device;
 
             // SNAP KE MOUNT POINT (BUKAN GHOST POINT)
-            device.transform.position =
-                mountPoint.position;
+            device.transform.position = mountPoint.position;
+            device.transform.rotation = mountPoint.rotation;
 
-            device.transform.rotation =
-                mountPoint.rotation;
-
-            Rigidbody rb =
-                device.GetComponent<Rigidbody>();
+            Rigidbody rb = device.GetComponent<Rigidbody>();
 
             if (rb != null)
             {
@@ -226,8 +247,7 @@ namespace HPhysic
                 return;
             }
 
-            Rigidbody rb =
-                attachedDevice.GetComponent<Rigidbody>();
+            Rigidbody rb = attachedDevice.GetComponent<Rigidbody>();
 
             if (rb != null)
             {

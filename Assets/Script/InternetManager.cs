@@ -12,7 +12,7 @@ public class InternetManager : MonoBehaviour
 
     public void RefreshNetworkState()
     {
-        NetworkDevice[] devices = FindObjectsOfType<NetworkDevice>();
+        NetworkDevice[] devices = FindObjectsByType<NetworkDevice>(FindObjectsSortMode.None);
 
         // 1. Reset semua status internet dan set power ke default
         foreach (var d in devices)

@@ -33,7 +33,7 @@ public class Npc : MonoBehaviour
         {
             animator.SetBool("isMoving", false);
 
-            PatrolPoint[] points = (PatrolPoint[])GameObject.FindObjectsOfType(typeof(PatrolPoint));
+            PatrolPoint[] points = GameObject.FindObjectsByType<PatrolPoint>(FindObjectsSortMode.None);
             float distance = Mathf.Infinity;
 
             for(int i = 0; i < points.Length; i++)
