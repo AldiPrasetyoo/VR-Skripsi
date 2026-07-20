@@ -5,6 +5,10 @@ using System.Collections.Generic;
 [RequireComponent(typeof(NetworkDevice))]
 public class WirelessDevice : MonoBehaviour
 {
+    [Header("Simulation")]
+    [Range(0f, 40f)]
+    public float signalSimulationBoost = 20f;
+
     [Header("Obstacle Settings")]
     public LayerMask obstacleLayer;
 
@@ -560,7 +564,8 @@ public class WirelessDevice : MonoBehaviour
             txLoss -
             rxLoss -
             interference -
-            obstacleLoss;
+            obstacleLoss +
+            signalSimulationBoost;
 
         return Mathf.Clamp(receivedPower, -120f, -30f);
     }

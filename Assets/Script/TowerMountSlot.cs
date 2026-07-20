@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 
@@ -35,6 +36,11 @@ namespace HPhysic
         private Color normalMarker = Color.cyan;
         private GameObject attachedDevice;
 
+        // KUNCI OPTIMASI: Static cache berbagi memori untuk semua TowerMountSlot
+        private static XRGrabInteractable[] allInteractablesCache;
+        private static float lastCacheTime = -1f;
+        private const float cacheRefreshInterval = 1f;
+
         void Start()
         {
             rend = GetComponent<Renderer>();
@@ -59,52 +65,70 @@ namespace HPhysic
                 point.transform.localRotation = Quaternion.identity;
                 ghostPoint = point.transform;
             }
+
+            // Ganti Update() dengan Coroutine
+            StartCoroutine(MountRoutine());
         }
 
-        void Update()
+        private IEnumerator MountRoutine()
         {
-            grabbedDevice = FindGrabbedDevice();
-
-            if (occupied)
+            while (true)
             {
-                DestroyGhost();
-                DestroyMarker();
-                Highlight(false);
-                return;
-            }
+                // Jeda 0.15 detik per frame untuk menghemat CPU
+                yield return new WaitForSeconds(0.15f);
 
-            if (grabbedDevice == null)
-            {
-                DestroyMarker();
-                DestroyGhost();
-                return;
-            }
-            
-            CreateMarker();
+                if (occupied)
+                {
+                    DestroyGhost();
+                    DestroyMarker();
+                    Highlight(false);
+                    continue; // Ganti return menjadi continue di dalam loop
+                }
 
-            float distance = Vector3.Distance(grabbedDevice.transform.position, ghostPoint.position);
+                grabbedDevice = FindGrabbedDevice();
 
-            if (distance <= detectRadius)
-            {
-                ShowGhost(grabbedDevice.gameObject);
-                Highlight(true);
-            }
-            else
-            {
-                DestroyGhost();
-                Highlight(false);
+                if (grabbedDevice == null)
+                {
+                    DestroyMarker();
+                    DestroyGhost();
+                    continue; // Ganti return menjadi continue
+                }
+                
+                CreateMarker();
+
+                float distance = Vector3.Distance(grabbedDevice.transform.position, ghostPoint.position);
+
+                if (distance <= detectRadius)
+                {
+                    ShowGhost(grabbedDevice.gameObject);
+                    Highlight(true);
+                }
+                else
+                {
+                    DestroyGhost();
+                    Highlight(false);
+                }
             }
         }
 
         XRGrabInteractable FindGrabbedDevice()
         {
-            XRGrabInteractable[] all = FindObjectsByType<XRGrabInteractable>(FindObjectsSortMode.None);
-
-            foreach (var item in all)
+            // Update cache maksimal 1 detik sekali
+            if (Time.time - lastCacheTime > cacheRefreshInterval || allInteractablesCache == null)
             {
+                allInteractablesCache = FindObjectsByType<XRGrabInteractable>(FindObjectsSortMode.None);
+                lastCacheTime = Time.time;
+            }
+
+            foreach (var item in allInteractablesCache)
+            {
+                if (item == null)
+                    continue;
+
                 if (item.interactorsSelecting.Count == 0)
                     continue;
 
+                // Hanya mendeteksi WirelessDevice
                 WirelessDevice device = item.GetComponent<WirelessDevice>();
 
                 if (device == null)
@@ -123,7 +147,7 @@ namespace HPhysic
 
             if (markerPrefab != null)
             {
-                marker = Instantiate(markerPrefab, ghostPoint); // Pemasangan parent yang benar
+                marker = Instantiate(markerPrefab, ghostPoint);
                 marker.name = "Tower_Marker";
             }
             else
@@ -133,7 +157,6 @@ namespace HPhysic
                 marker.transform.SetParent(ghostPoint, false);
             }
 
-            // Hancurkan collider dari marker secara paksa agar tidak memblokir device saat dilepas (Mount)
             foreach (Collider c in marker.GetComponentsInChildren<Collider>())
             {
                 Destroy(c);
@@ -168,7 +191,6 @@ namespace HPhysic
             if (ghost != null)
                 return;
 
-            // Perbaikan: jadikan child DULU, baru set koordinat lokal ke nol, agar posisinya akurat dan tidak terlempar
             ghost = Instantiate(device, ghostPoint);
             ghost.name = "Tower_GhostPreview";
             ghost.transform.localPosition = Vector3.zero;

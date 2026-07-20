@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using HPhysic;
@@ -12,6 +13,11 @@ public class LanGhostPreview : MonoBehaviour
     private GameObject ghost;
     private XRGrabInteractable grabbedCable;
 
+    // KUNCI OPTIMASI: Static cache agar 20+ objek tidak memindai Scene sendiri-sendiri
+    private static XRGrabInteractable[] allInteractablesCache;
+    private static float lastCacheTime = -1f;
+    private const float cacheRefreshInterval = 1f; // Refresh daftar item setiap 1 detik
+
     void Start()
     {
         if (femaleConnector == null)
@@ -19,46 +25,70 @@ public class LanGhostPreview : MonoBehaviour
 
         if (ghostPoint == null)
             ghostPoint = transform;
+
+        // Menggantikan Update() dengan Coroutine agar sangat ringan di CPU
+        StartCoroutine(PreviewRoutine());
     }
 
-    void Update()
+    private IEnumerator PreviewRoutine()
     {
-        grabbedCable = FindGrabbedCable();
-
-        // Tidak ada kabel yang sedang dipegang
-        if (grabbedCable == null)
+        // Looping berjalan aman di background
+        while (true)
         {
-            DestroyGhost();
-            return;
-        }
+            // Memberikan jeda 0.15 detik sebelum mengecek ulang (menghemat CPU hingga 90%)
+            yield return new WaitForSeconds(0.15f);
 
-        Connector male = grabbedCable.GetComponent<Connector>();
+            // Jika sudah terkoneksi, tidak perlu repot mencari ghost
+            if (femaleConnector.IsConnected)
+            {
+                DestroyGhost();
+                continue;
+            }
 
-        if (male == null)
-            return;
+            grabbedCable = FindGrabbedCable();
 
-        if (femaleConnector.CanConnect(male))
-        {
-            ShowGhost(male);
-        }
-        else
-        {
-            DestroyGhost();
-        }
+            // Tidak ada kabel yang sedang dipegang
+            if (grabbedCable == null)
+            {
+                DestroyGhost();
+                continue;
+            }
 
-        // Jika sudah terkoneksi, ghost hilang
-        if (femaleConnector.IsConnected)
-        {
-            DestroyGhost();
+            Connector male = grabbedCable.GetComponent<Connector>();
+
+            if (male == null)
+            {
+                DestroyGhost();
+                continue;
+            }
+
+            if (femaleConnector.CanConnect(male))
+            {
+                ShowGhost(male);
+            }
+            else
+            {
+                DestroyGhost();
+            }
         }
     }
 
     XRGrabInteractable FindGrabbedCable()
     {
-        XRGrabInteractable[] all = FindObjectsByType<XRGrabInteractable>(FindObjectsSortMode.None);
-
-        foreach (var item in all)
+        // Memperbarui cache hanya 1 detik sekali. 
+        // Jika satu port sudah mencari, port lain tinggal pakai data yang sama!
+        if (Time.time - lastCacheTime > cacheRefreshInterval || allInteractablesCache == null)
         {
+            allInteractablesCache = FindObjectsByType<XRGrabInteractable>(FindObjectsSortMode.None);
+            lastCacheTime = Time.time;
+        }
+
+        foreach (var item in allInteractablesCache)
+        {
+            // Mencegah error jika ada item yang dihancurkan di tengah permainan
+            if (item == null) 
+                continue; 
+
             if (item.interactorsSelecting.Count == 0)
                 continue;
 
@@ -88,14 +118,10 @@ public class LanGhostPreview : MonoBehaviour
 
         if (gc != null)
         {
-            ghost.transform.rotation =
-                ghostPoint.rotation * gc.RotationOffset;
+            ghost.transform.rotation = ghostPoint.rotation * gc.RotationOffset;
 
-            Vector3 offset =
-                gc.ConnectionPosition - ghost.transform.position;
-
-            ghost.transform.position =
-                ghostPoint.position - offset;
+            Vector3 offset = gc.ConnectionPosition - ghost.transform.position;
+            ghost.transform.position = ghostPoint.position - offset;
         }
 
         // Nonaktifkan semua collider
@@ -104,7 +130,6 @@ public class LanGhostPreview : MonoBehaviour
 
         // Rigidbody menjadi kinematic
         Rigidbody rb = ghost.GetComponent<Rigidbody>();
-
         if (rb != null)
         {
             rb.isKinematic = true;

@@ -12,22 +12,28 @@ namespace HPhysic
         [SerializeField, Min(0.0001f)] private float size = 0.3f;
 
         [Header("Behaviour")]
-        [SerializeField, Min(1f)] private float springForce = 200;
+        [SerializeField, Min(0f)] private float springForce = 0f;
         [SerializeField, Min(1f)] private float brakeLengthMultiplier = 2f;
         [SerializeField, Min(0.1f)] private float minBrakeTime = 1f;
 
         private float timeToBrake = 1f;
 
         [Header("Auto Length")]
-        [SerializeField] private float autoExpandThreshold = 0.5f;
+        [SerializeField] private float autoExpandThreshold = 0.1f;
         [SerializeField] private float autoShrinkThreshold = 0.3f;
-        [SerializeField] private float autoDelay = 0.15f;
-        [SerializeField] private int maxPoints = 20;
+        [SerializeField] private float autoDelay = 0f;
+        [SerializeField] private int maxPoints = 300;
         [SerializeField] private int minPoints = 2;
 
         [Header("Auto Reset")]
         [SerializeField] private int defaultPoints = 5;
         [SerializeField] private float shrinkInterval = 0.05f;
+
+        [Header("Player Assist (Magnet)")]
+        [SerializeField] private float pullForce = 15f;
+        
+        // Dibuat private agar tidak error/hilang referensi saat di-spawn sebagai Prefab
+        private Transform playerTarget;
 
         private float autoTimer = 0f;
         private float shrinkTimer = 0f;
@@ -59,7 +65,7 @@ namespace HPhysic
                 return;
             }
 
-            // 🔥 FIX 1: HAPUS SEMUA SPRING LAMA
+            // Hapus semua spring lama
             foreach (var rb in GetComponentsInChildren<Rigidbody>())
             {
                 var springs = rb.GetComponents<SpringJoint>();
@@ -84,12 +90,22 @@ namespace HPhysic
             Vector3 lastPos = start.transform.position;
             Rigidbody lastBody = start.GetComponent<Rigidbody>();
 
+            // Hitung arah secara dinamis menuju ke ujung kabel (End)
+            Vector3 direction = (end.transform.position - start.transform.position).normalized;
+            
+            // Jika belum bergerak jauh (baru di-spawn dari tower), paksa jatuh lurus ke bawah
+            if (direction == Vector3.zero || Vector3.Distance(start.transform.position, end.transform.position) < 0.1f)
+            {
+                direction = Vector3.down;
+            }
+
             for (int i = 0; i < numberOfPoints; i++)
             {
                 GameObject cConnector = (i == 0) ? connector0 : CreateNewCon(i);
                 GameObject cPoint = (i == 0) ? point0 : CreateNewPoint(i);
 
-                Vector3 newPos = lastPos + transform.forward * space;
+                // Kabel selalu memanjang ke arah jatuhnya ujung kabel / gravitasi
+                Vector3 newPos = lastPos + (direction * space);
 
                 cPoint.transform.position = newPos;
                 cPoint.transform.localScale = Vector3.one * size;
@@ -97,7 +113,6 @@ namespace HPhysic
 
                 Rigidbody rb = cPoint.GetComponent<Rigidbody>();
 
-                // 🔥 FIX 2: pastikan hanya 1 spring per point
                 SpringJoint spring = cPoint.GetComponent<SpringJoint>();
                 if (spring == null)
                     spring = cPoint.AddComponent<SpringJoint>();
@@ -113,9 +128,11 @@ namespace HPhysic
                 lastPos = newPos;
             }
 
-            // 🔥 FIX 3: END selalu disambung dari point terakhir
-            Vector3 endPos = lastPos + transform.forward * space;
-            end.transform.position = endPos;
+            // END selalu disambung dari point terakhir
+            Vector3 endPos = lastPos + (direction * space);
+
+            // BARIS DIMATIKAN agar ujung kabel tidak teleportasi paksa dan jatuh natural
+            // end.transform.position = endPos; 
 
             Rigidbody endRB = end.GetComponent<Rigidbody>();
 
@@ -133,6 +150,13 @@ namespace HPhysic
         {
             startConnector = start.GetComponent<Connector>();
             endConnector = end.GetComponent<Connector>();
+
+            // CARA MENGAKALI PREFAB:
+            // Cari kamera utama (kepala pemain VR) secara otomatis saat kabel di-spawn
+            if (Camera.main != null)
+            {
+                playerTarget = Camera.main.transform;
+            }
 
             points = new List<Transform>();
             connectors = new List<Transform>();
@@ -249,7 +273,6 @@ namespace HPhysic
 
                     shrinkTimer = shrinkInterval;
                 }
-
                 return;
             }
             else
@@ -280,6 +303,25 @@ namespace HPhysic
                     }
                 }
             }
+
+            // ==========================================
+            // FITUR MAGNET: Tarik kabel ke arah pemain saat tidak tercolok
+            // ==========================================
+            if (!isConnected && playerTarget != null)
+            {
+                Rigidbody endRB = end.GetComponent<Rigidbody>();
+                
+                if (endRB != null && !endRB.isKinematic)
+                {
+                    Vector3 directionToPlayer = playerTarget.position - end.transform.position;
+                    directionToPlayer.y = 0; // Nol-kan sumbu Y agar tidak terbang ke udara
+                    
+                    if (directionToPlayer.magnitude > 0.5f)
+                    {
+                        endRB.AddForce(directionToPlayer.normalized * pullForce * Time.deltaTime, ForceMode.VelocityChange);
+                    }
+                }
+            }
         }
 
         private Vector3 CountConPos(Vector3 start, Vector3 end) => (start + end) / 2f;
@@ -303,14 +345,16 @@ namespace HPhysic
         {
             spring.connectedBody = connectedBody;
             spring.spring = springForce;
-            spring.damper = 2f;
+            spring.damper = 2f; 
 
             spring.autoConfigureConnectedAnchor = false;
             spring.anchor = Vector3.zero;
             spring.connectedAnchor = Vector3.zero;
 
             spring.minDistance = space;
-            spring.maxDistance = space;
+            
+            // Toleransi peregangan agar gravitasi bisa bekerja dan tidak macet
+            spring.maxDistance = space * 4f; 
         }
 
         private GameObject CreateNewPoint(int index)

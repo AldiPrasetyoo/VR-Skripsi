@@ -2,10 +2,19 @@ using UnityEngine;
 using UnityEngine.Playables;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using System.Collections;
 
 public class InputManagerPlayer : MonoBehaviour
 {
+
+    [Header("Skip Cinematic Hold")]
+    public InputActionReference skipAction;
+
+    public float holdDuration = 2f;
+
+    private float skipTimer = 0f;
+    private bool skipping = false;
 
     [Header("Timeline")]
     public PlayableDirector mainTimeline;
@@ -50,8 +59,6 @@ public class InputManagerPlayer : MonoBehaviour
 
     private bool cinematicStarted = false;
     private bool cinematicFinished = false;
-
-
 
     private void Start()
     {
@@ -114,19 +121,16 @@ public class InputManagerPlayer : MonoBehaviour
 
         }
 
-
-
+        if(skipAction != null)
+        {
+            skipAction.action.Enable();
+        }
         // langsung mulai cinematic
 
         StartMainCinematic();
 
 
     }
-
-
-
-
-
 
     private void Update()
     {
@@ -139,26 +143,80 @@ public class InputManagerPlayer : MonoBehaviour
 
         }
 
+        HandleSkip();
+
     }
 
+     private void SkipCinematic()
+    {
+
+        cinematicFinished = true;
+
+
+        if(mainTimeline != null)
+        {
+            mainTimeline.Stop();
+        }
+
+
+        if(typingCoroutine != null)
+        {
+            StopCoroutine(typingCoroutine);
+            typingCoroutine = null;
+        }
+
+
+        subtitleText.text = "";
+
+
+        StartCoroutine(GoToNextScene());
+
+    }
+    
+    private void HandleSkip()
+    {
+
+        if(cinematicFinished)
+            return;
+
+
+        if(skipAction == null)
+            return;
 
 
 
+        if(skipAction.action.IsPressed())
+        {
+
+            skipTimer += Time.deltaTime;
 
 
+            if(skipTimer >= holdDuration && !skipping)
+            {
+
+                skipping = true;
+
+                Debug.Log("Cinematic di skip");
+
+                SkipCinematic();
+
+            }
+
+        }
+        else
+        {
+
+            skipTimer = 0;
+
+        }
+
+    }
 
     public void StartMainCinematic()
     {
-
-
         cinematicStarted = true;
-
         cinematicFinished = false;
-
-
         currentSubtitle = "";
-
-
 
         if(typingCoroutine != null)
         {
@@ -168,8 +226,6 @@ public class InputManagerPlayer : MonoBehaviour
             typingCoroutine = null;
 
         }
-
-
 
         if(mainTimeline != null)
         {
@@ -185,20 +241,11 @@ public class InputManagerPlayer : MonoBehaviour
 
     }
 
-
-
-
-
-
-
-
     private void UpdateSubtitle(float time)
     {
 
         if(subtitleText == null)
             return;
-
-
 
         string newSubtitle = "";
 
@@ -231,59 +278,32 @@ public class InputManagerPlayer : MonoBehaviour
 
         if(newSubtitle != currentSubtitle)
         {
-
             currentSubtitle = newSubtitle;
-
-
             if(typingCoroutine != null)
                 StopCoroutine(typingCoroutine);
-
-
-
             typingCoroutine =
             StartCoroutine(TypeSubtitle(newSubtitle));
 
-
         }
-
-
     }
-
-
-
-
-
-
 
     IEnumerator TypeSubtitle(string text)
     {
 
-
         subtitleText.text = "";
-
 
         foreach(char letter in text)
         {
 
             subtitleText.text += letter;
-
-
             yield return new WaitForSeconds(typingSpeed);
 
         }
 
-
     }
-
-
-
-
-
-
 
     private void OnTimelineFinished(PlayableDirector director)
     {
-
 
         if(!cinematicStarted)
             return;
@@ -295,13 +315,7 @@ public class InputManagerPlayer : MonoBehaviour
 
         if(director != mainTimeline)
             return;
-
-
-
         cinematicFinished = true;
-
-
-
         if(typingCoroutine != null)
         {
 
@@ -310,97 +324,45 @@ public class InputManagerPlayer : MonoBehaviour
             typingCoroutine = null;
 
         }
-
-
-
         subtitleText.text = "";
-
-
-
         StartCoroutine(GoToNextScene());
-
-
     }
-
-
-
-
-
-
-
 
     IEnumerator GoToNextScene()
     {
-
-
         yield return StartCoroutine(Fade(0,1));
-
-
 
         if(VRSceneTransition.Instance != null)
         {
-
             VRSceneTransition.Instance.LoadScene(nextSceneName);
-
         }
         else
         {
-
             Debug.LogWarning("VRSceneTransition tidak ditemukan");
-
         }
 
 
     }
-
-
-
-
-
-
-
 
     IEnumerator Fade(float from,float to)
     {
 
-
         if(fadeCanvasGroup == null)
             yield break;
-
-
-
         float timer = 0;
-
-
-
         fadeCanvasGroup.alpha = from;
-
-
-
         while(timer < fadeDuration)
         {
-
             timer += Time.deltaTime;
-
-
             fadeCanvasGroup.alpha =
             Mathf.Lerp(
                 from,
                 to,
                 timer / fadeDuration
             );
-
-
             yield return null;
 
         }
-
-
-
         fadeCanvasGroup.alpha = to;
-
-
     }
-
-
 }

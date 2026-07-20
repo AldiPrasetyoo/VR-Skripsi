@@ -4,72 +4,114 @@ using UnityEngine.InputSystem;
 public class InventoryVR : MonoBehaviour
 {
     [Header("Inventory UI")]
-    public GameObject Inventory;
+    public GameObject inventory;
 
-    [Header("Anchor Follow")]
-    public Transform Anchor;
+    [Header("XR Origin")]
+    public Transform xrOrigin;
 
-    [Header("XRI Controller Input (Kiri)")]
+    [Header("Spawn Settings")]
+    public float distance = 0.8f;
+    public float heightOffset = -0.2f;
+    public float tiltAngle = 15f;
+
+    [Header("Input")]
     public InputActionReference leftInventoryButton;
-
-    [Header("XRI Controller Input (Kanan)")]
     public InputActionReference rightInventoryButton;
 
-    private bool UIActive = false;
+    private bool uiActive;
+    private Camera vrCamera;
+
+    private Vector3 worldOffset;
+
+    private void Awake()
+    {
+        vrCamera = Camera.main;
+    }
 
     private void Start()
     {
-        Inventory.SetActive(false);
+        if (inventory != null)
+            inventory.SetActive(false);
 
-        // Aktifkan tombol kiri
-        if (leftInventoryButton != null)
-            leftInventoryButton.action.Enable();
-
-        // Aktifkan tombol kanan
-        if (rightInventoryButton != null)
-            rightInventoryButton.action.Enable();
+        leftInventoryButton?.action.Enable();
+        rightInventoryButton?.action.Enable();
     }
 
     private void OnDisable()
     {
-        // Matikan tombol kiri
-        if (leftInventoryButton != null)
-            leftInventoryButton.action.Disable();
-
-        // Matikan tombol kanan
-        if (rightInventoryButton != null)
-            rightInventoryButton.action.Disable();
+        leftInventoryButton?.action.Disable();
+        rightInventoryButton?.action.Disable();
     }
 
     private void Update()
     {
-        // Cek apakah tombol kiri ditekan frame ini
-        bool isLeftPressed = leftInventoryButton != null && leftInventoryButton.action.WasPressedThisFrame();
-        
-        // Cek apakah tombol kanan ditekan frame ini
-        bool isRightPressed = rightInventoryButton != null && rightInventoryButton.action.WasPressedThisFrame();
+        bool leftPressed =
+            leftInventoryButton != null &&
+            leftInventoryButton.action.WasPressedThisFrame();
 
-        // Jika salah satu tombol ditekan, jalankan Toggle
-        if (isLeftPressed || isRightPressed)
+        bool rightPressed =
+            rightInventoryButton != null &&
+            rightInventoryButton.action.WasPressedThisFrame();
+
+        if (leftPressed || rightPressed)
         {
             ToggleInventory();
         }
 
-        if (UIActive)
+        if (uiActive && xrOrigin != null)
         {
-            Inventory.transform.position = Anchor.position;
-            
-            Inventory.transform.rotation = Quaternion.Euler(
-                Anchor.eulerAngles.x + 15,
-                Anchor.eulerAngles.y,
-                0
-            );
+            inventory.transform.position =
+                xrOrigin.position + worldOffset;
         }
     }
 
-    void ToggleInventory()
+    private void ToggleInventory()
     {
-        UIActive = !UIActive;
-        Inventory.SetActive(UIActive);
+        uiActive = !uiActive;
+
+        if (inventory == null)
+            return;
+
+        inventory.SetActive(uiActive);
+
+        if (!uiActive)
+            return;
+
+        if (vrCamera == null)
+            vrCamera = Camera.main;
+
+        Transform cam = vrCamera.transform;
+
+        // Spawn di depan arah pandang
+        Vector3 position =
+            cam.position +
+            cam.forward * distance;
+
+        position.y += heightOffset;
+
+        inventory.transform.position = position;
+
+        // Menghadap pemain
+        Vector3 direction =
+            cam.position - position;
+
+        direction.y = 0;
+
+        inventory.transform.rotation =
+            Quaternion.LookRotation(-direction);
+
+        inventory.transform.Rotate(
+            tiltAngle,
+            0,
+            0,
+            Space.Self);
+
+        // Simpan offset terhadap XR Origin
+        if (xrOrigin != null)
+        {
+            worldOffset =
+                inventory.transform.position -
+                xrOrigin.position;
+        }
     }
 }

@@ -41,38 +41,59 @@ public class Slot : MonoBehaviour
         }
     }
 
-    private void Update()
+private void Update()
+{
+    // ==========================================
+    // 1. LOGIKA MENGELUARKAN ITEM
+    // Cek langsung pada item yang sudah ada di dalam slot
+    // ==========================================
+    if (ItemInSlot != null)
     {
-        if (hoveringItem == null)
-            return;
+        XRGrabInteractable grabInSlot = ItemInSlot.GetComponent<XRGrabInteractable>();
+        
+        // Jika item yang ada di slot sedang di-grab oleh player
+        if (grabInSlot != null && grabInSlot.isSelected)
+        {
+            // Pastikan tidak bentrok dengan logika hovering
+            if (hoveringItem == ItemInSlot)
+            {
+                hoveringItem = null;
+            }
 
-        XRGrabInteractable grab =
-            hoveringItem.GetComponent<XRGrabInteractable>();
-
-        if (grab == null)
-            return;
-
-        Item item =
-            hoveringItem.GetComponent<Item>();
-
-        if (item == null)
-            return;
-
-        // Belum pernah di-grab, jangan boleh masuk inventory
-        if (!item.canEnterInventory)
-            return;
-
-        // Masih dipegang, tunggu sampai dilepas
-        if (grab.isSelected)
-            return;
-
-        InsertItem(hoveringItem);
-
-        // Reset supaya harus di-grab lagi jika ingin dimasukkan ulang
-        item.ResetInventoryPermission();
-
-        hoveringItem = null;
+            RemoveItem();
+            Debug.Log("Item keluar dari inventory karena di-grab");
+        }
     }
+
+    // ==========================================
+    // 2. LOGIKA MEMASUKKAN ITEM BARU
+    // Cek pada item yang sedang menyentuh slot (hovering)
+    // ==========================================
+    if (hoveringItem == null)
+        return;
+
+    XRGrabInteractable grab = hoveringItem.GetComponent<XRGrabInteractable>();
+    if (grab == null)
+        return;
+
+    Item item = hoveringItem.GetComponent<Item>();
+    if (item == null)
+        return;
+
+    // Belum pernah di-grab, jangan boleh masuk inventory
+    if (!item.canEnterInventory)
+        return;
+
+    // Masih dipegang, tunggu dilepas
+    if (grab.isSelected)
+        return;
+
+    // Masukkan ke slot
+    InsertItem(hoveringItem);
+
+    item.ResetInventoryPermission();
+    hoveringItem = null;
+}
 
     void InsertItem(GameObject obj)
     {
@@ -123,24 +144,41 @@ public class Slot : MonoBehaviour
     {
         if (ItemInSlot != null)
         {
-            Item item = ItemInSlot.GetComponent<Item>();
 
-            if (item != null)
+            GameObject itemObject = ItemInSlot;
+
+
+            Item item = itemObject.GetComponent<Item>();
+
+            if(item != null)
             {
                 item.inSlot = false;
                 item.currentSlot = null;
             }
 
-            Rigidbody rb = ItemInSlot.GetComponent<Rigidbody>();
 
-            if (rb != null)
+            Rigidbody rb = itemObject.GetComponent<Rigidbody>();
+
+            if(rb != null)
             {
                 rb.isKinematic = false;
             }
+
+
+            // keluar dari slot inventory
+            itemObject.transform.SetParent(null);
+
+
+            // reset posisi physics
+            rb?.WakeUp();
+
         }
+
 
         ItemInSlot = null;
 
-        slotImage.color = originalColor;
+
+        if(slotImage != null)
+            slotImage.color = originalColor;
     }
 }

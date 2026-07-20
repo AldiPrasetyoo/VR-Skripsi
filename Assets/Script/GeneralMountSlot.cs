@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 
@@ -38,6 +39,11 @@ namespace HPhysic
 
         private Color normalMarker = Color.cyan;
 
+        // KUNCI OPTIMASI: Static cache agar puluhan slot tidak memindai Scene sendiri-sendiri
+        private static XRGrabInteractable[] allInteractablesCache;
+        private static float lastCacheTime = -1f;
+        private const float cacheRefreshInterval = 1f;
+
         private void Start()
         {
             rend = GetComponent<Renderer>();
@@ -48,7 +54,7 @@ namespace HPhysic
             if (mountPoint == null)
             {
                 GameObject mp = new GameObject("MountPoint");
-                mp.transform.SetParent(transform, false); // Ditambahkan 'false' untuk keamanan hirarki
+                mp.transform.SetParent(transform, false); 
                 mp.transform.localPosition = Vector3.zero;
                 mp.transform.localRotation = Quaternion.identity;
                 mountPoint = mp.transform;
@@ -57,51 +63,75 @@ namespace HPhysic
             if (ghostPoint == null)
             {
                 GameObject gp = new GameObject("GhostPoint");
-                gp.transform.SetParent(transform, false); // Ditambahkan 'false'
+                gp.transform.SetParent(transform, false); 
                 gp.transform.localPosition = Vector3.zero;
                 gp.transform.localRotation = Quaternion.identity;
                 ghostPoint = gp.transform;
             }
+
+            // Ganti Update dengan Coroutine yang ringan
+            StartCoroutine(MountRoutine());
         }
 
-        private void Update()
+        private IEnumerator MountRoutine()
         {
-            grabbedObject = FindGrabbedObject();
-
-            if (grabbedObject == null)
+            while (true)
             {
-                DestroyMarker();
-                DestroyGhost();
-                Highlight(false);
-                return;
-            }
+                // Jeda 0.15 detik per pengecekan, menghemat CPU drastis
+                yield return new WaitForSeconds(0.15f);
 
-            CreateMarker();
+                // OPTIMASI TAMBAHAN: Jika slot sudah terisi, tidak usah cari barang
+                if (occupied)
+                {
+                    DestroyMarker();
+                    DestroyGhost();
+                    Highlight(false);
+                    continue;
+                }
 
-            float distance =
-                Vector3.Distance(
+                grabbedObject = FindGrabbedObject();
+
+                if (grabbedObject == null)
+                {
+                    DestroyMarker();
+                    DestroyGhost();
+                    Highlight(false);
+                    continue;
+                }
+
+                CreateMarker();
+
+                float distance = Vector3.Distance(
                     grabbedObject.transform.position,
                     ghostPoint.position);
 
-            if (distance <= detectRadius)
-            {
-                ShowGhost(grabbedObject.gameObject);
-                Highlight(true);
-            }
-            else
-            {
-                DestroyGhost();
-                Highlight(false);
+                if (distance <= detectRadius)
+                {
+                    ShowGhost(grabbedObject.gameObject);
+                    Highlight(true);
+                }
+                else
+                {
+                    DestroyGhost();
+                    Highlight(false);
+                }
             }
         }
 
         XRGrabInteractable FindGrabbedObject()
         {
-            XRGrabInteractable[] all =
-                FindObjectsByType<XRGrabInteractable>(FindObjectsSortMode.None);
-
-            foreach (var item in all)
+            // Memperbarui cache hanya 1 detik sekali
+            if (Time.time - lastCacheTime > cacheRefreshInterval || allInteractablesCache == null)
             {
+                allInteractablesCache = FindObjectsByType<XRGrabInteractable>(FindObjectsSortMode.None);
+                lastCacheTime = Time.time;
+            }
+
+            foreach (var item in allInteractablesCache)
+            {
+                if (item == null)
+                    continue;
+
                 if (item.interactorsSelecting.Count == 0)
                     continue;
 
@@ -122,31 +152,23 @@ namespace HPhysic
 
             if (markerPrefab != null)
             {
-                // SOLUSI 1: Pakai Prefab (Paling aman untuk VR Single Pass Instanced)
                 marker = Instantiate(markerPrefab);
                 marker.name = "MountMarker";
-                
-                // Gunakan 'false' agar orientasi lokal tidak terganggu skala dari parent
                 marker.transform.SetParent(ghostPoint, false);
             }
             else
             {
-                // SOLUSI 2: Primitive Object dengan perbaikan SetParent
                 marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 marker.name = "MountMarker";
-
-                // Parameter 'false' krusial di VR agar tidak menarik posisi/skala dari world-space yang salah
                 marker.transform.SetParent(ghostPoint, false);
                 Destroy(marker.GetComponent<Collider>());
             }
 
-            // Set posisi lokal dan skala (berlaku untuk kedua solusi)
             marker.transform.localPosition = new Vector3(0, 0, 0.1f);
             marker.transform.localScale = Vector3.one * 0.15f;
 
             markerRenderer = marker.GetComponent<Renderer>();
 
-            // Jika pakai primitive dan ada material VR-ready yang diset di inspector, timpa material defaultnya
             if (markerPrefab == null && vrReadyMaterial != null && markerRenderer != null)
             {
                 markerRenderer.material = vrReadyMaterial;
@@ -208,8 +230,7 @@ namespace HPhysic
             if (rend == null)
                 return;
 
-            rend.material.color =
-                active ? Color.green : originalColor;
+            rend.material.color = active ? Color.green : originalColor;
         }
 
         public void AttachDevice(GameObject device)
@@ -220,7 +241,6 @@ namespace HPhysic
             occupied = true;
             attachedDevice = device;
 
-            // SNAP KE MOUNT POINT (BUKAN GHOST POINT)
             device.transform.position = mountPoint.position;
             device.transform.rotation = mountPoint.rotation;
 

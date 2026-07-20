@@ -42,72 +42,14 @@ public class NPCInstructorPointing : MonoBehaviour
 
     private string[] dialog =
     {
-
-        "Selamat datang di area simulasi jaringan wireless.\n\n" +
-        "Tempat ini merupakan gambaran kondisi dunia nyata dimana kamu akan menyelesaikan permasalahan jaringan.",
-
-
-        "Sebelum memulai simulasi, perhatikan panduan penggunaan controller VR yang tersedia di sebelah kanan.",
-
-
-        "Gunakan Trigger untuk memilih tombol pada UI, Grip untuk mengambil atau memindahkan perangkat, dan joystick kanan untuk berpindah menggunakan teleport.",
-
-
-        "Pada simulasi ini kamu akan diberikan sebuah misi untuk membangun koneksi jaringan Point To Point antar lokasi.",
-
-
-        "Misi yang harus kamu kerjakan dapat dilihat melalui tab informasi dengan menekan Primary Button pada controller kiri.",
-
-
-        "Gunakan informasi tersebut sebagai panduan untuk menyelesaikan setiap tahapan konfigurasi jaringan.",
-
-
-        "Di area ini tersedia beberapa perangkat jaringan seperti NanoStation, antenna, dan perangkat pendukung lainnya.",
-
-
-        "Lakukan eksplorasi terhadap perangkat yang tersedia dan gunakan pengetahuan yang sudah dipelajari sebelumnya.",
-
-
-        "Pastikan pemasangan perangkat, arah antenna, serta konfigurasi jaringan dilakukan dengan benar.",
-
-
-        "Jika sudah memahami instruksi awal, silahkan lanjutkan dan mulai menyelesaikan misi jaringan Point To Point.",
-
-
-
-        "Untuk memulai simulasi, silahkan menuju lokasi Gedung 1 yang telah ditandai pada peta.",
-
-
-        "Setelah sampai di Gedung 1, gunakan titik teleport berwarna hijau untuk menuju area pemasangan di bagian atas gedung.",
-
-
-        "Pada area Gedung 1 terdapat lokasi pemasangan perangkat dan sebuah tower yang dapat digunakan dalam simulasi.",
-
-
-        "Tower tersebut memiliki fitur pengaturan ketinggian yang dapat digunakan sesuai kebutuhan simulasi.",
-
-        "Untuk mengatur ketinggian tower, gunakan tombol yang tersedia pada perangkat tower tersebut.",
-
-
-
-        "Setelah menyelesaikan tahapan pada Gedung 1, lanjutkan menuju Gedung 2 melalui jalur yang tersedia.",
-
-
-        "Gunakan peta sebagai panduan untuk menemukan lokasi Gedung 2.",
-
-
-        "Untuk menuju area pemasangan di Gedung 2, masuk terlebih dahulu ke ruangan lift yang tersedia.",
-
-
-        "Pencet tombol lift sesuai dengan lantai yang ingin dikunjungi.",
-
-
-
-        "Perhatikan setiap perangkat yang tersedia dan gunakan pemahaman jaringan Point To Point untuk menyelesaikan simulasi.",
-
-
-        "Selamat menyelesaikan simulasi jaringan wireless."
-
+        "Selamat datang di simulasi jaringan wireless. Di sini kamu akan praktik membangun koneksi Point to Point (PtP) seperti di dunia nyata.",
+        "Panduan Controller: Gunakan Trigger untuk memilih UI, Grip untuk mengambil barang, dan Joystick Kanan untuk teleportasi.",
+        "Tekan Primary Button pada controller kiri untuk membuka tab informasi misi sebagai panduanmu.",
+        "Tugasmu adalah memasang dan mengonfigurasi perangkat yang tersedia, seperti NanoStation dan antena dengan benar.",
+        "Langkah pertama: Pergi ke Gedung 1 sesuai peta. Gunakan titik teleport hijau untuk naik ke area pemasangan di atap.",
+        "Di Gedung 1 terdapat tower untuk memasang perangkat. Gunakan tombol pada tower untuk mengatur ketinggiannya.",
+        "Setelah selesai, ikuti peta menuju Gedung 2. Masuk ke lift dan tekan tombol lantai untuk menuju area pemasangan kedua.",
+        "Pastikan semua perangkat terpasang, antena terarah dengan tepat, dan jaringan terkonfigurasi. Selamat mencoba!"
     };
 
 

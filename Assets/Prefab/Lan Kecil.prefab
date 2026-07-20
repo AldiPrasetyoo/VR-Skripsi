@@ -189,7 +189,7 @@ MonoBehaviour:
   connectionPoint: {fileID: 6964116533474635045}
   collorRenderer: {fileID: 5564417558395216638}
   sparksParticle: {fileID: 0}
-  disconnectDistance: 0.15
+  disconnectDistance: 50
 --- !u!65 &4728126483100720819
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -803,7 +803,7 @@ MonoBehaviour:
   connectionPoint: {fileID: 6107614666297670000}
   collorRenderer: {fileID: 1177406468728925069}
   sparksParticle: {fileID: 0}
-  disconnectDistance: 0.15
+  disconnectDistance: 50
 --- !u!65 &1476679171408541122
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2325,16 +2325,18 @@ MonoBehaviour:
   numberOfPoints: 5
   space: 0.2
   size: 0.044
-  springForce: 200
-  brakeLengthMultiplier: 2
-  minBrakeTime: 1
-  autoExpandThreshold: 0.5
+  springForce: 5
+  brakeLengthMultiplier: 100
+  minBrakeTime: 2
+  autoExpandThreshold: 0.1
   autoShrinkThreshold: 0.3
   autoDelay: 0.1
   maxPoints: 50
   minPoints: 5
   defaultPoints: 5
   shrinkInterval: 0.05
+  playerTarget: {fileID: 0}
+  pullForce: 15
   start: {fileID: 162902154969405948}
   end: {fileID: 2532937707774075398}
   connector0: {fileID: 4816941436788463143}

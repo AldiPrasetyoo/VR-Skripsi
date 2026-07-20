@@ -576,12 +576,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b400c592cea6127468cee2189fca2537, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WirelessDevice
+  worldScaleFactor: 10
+  fsplFrequencyOverride: 5745
+  fsplConstant: 27.55
+  maxLinkDistance: 2500
+  disconnectThreshold: -95
+  outOfBeamLoss: 10
+  inBeamLossFactor: 6
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
   mode: 0
   deviceIcon: {fileID: 0}
-  networkDevice: {fileID: 0}
   deviceName: 
   isConnected: 0
   connectedAP: {fileID: 0}
@@ -607,6 +613,7 @@ MonoBehaviour:
   beamWidth: 60
   channelWidth: 1
   channelShift: 0
+  extensionChannel: 0
   currentSignal: -120
   currentEIRP: 0
   horizontalSignal: 0
@@ -626,7 +633,6 @@ MonoBehaviour:
   WDS: 1
   countryCode: Indonesia
   ieee80211Mode: 0
-  extensionChannel: 0
   freqScan: 0
   calculateEIRP: 1
   autoEIRP: 0
@@ -638,6 +644,7 @@ MonoBehaviour:
   lockToAPSSID: 
   lan0Connector: {fileID: 5333891156740603904}
   lan1Connector: {fileID: 2575477723389939214}
+  networkDevice: {fileID: 0}
 --- !u!114 &3351901383445987164
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -668,6 +675,8 @@ MonoBehaviour:
   inventoryScale: 0.25
   inSlot: 0
   currentSlot: {fileID: 0}
+  isGrabbed: 0
+  canEnterInventory: 0
 --- !u!1 &1237113066810893099
 GameObject:
   m_ObjectHideFlags: 0
@@ -964,7 +973,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LanGhostPreview
   femaleConnector: {fileID: 2575477723389939214}
   ghostPoint: {fileID: 8489653657963562279}
-  detectRadius: 0.1
 --- !u!1 &1884622697077632677
 GameObject:
   m_ObjectHideFlags: 0
@@ -11139,7 +11147,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   femaleConnector: {fileID: 5333891156740603904}
   ghostPoint: {fileID: 3458965398433731291}
-  detectRadius: 0.1
 --- !u!1 &6413469244857118205
 GameObject:
   m_ObjectHideFlags: 0

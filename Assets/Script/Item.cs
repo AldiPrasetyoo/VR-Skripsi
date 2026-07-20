@@ -64,6 +64,17 @@ public class Item : MonoBehaviour
     private void OnSelectExited(SelectExitEventArgs args)
     {
         isGrabbed = false;
+        StartCoroutine(ResetPermissionNextFrame());
+    }
+
+    private System.Collections.IEnumerator ResetPermissionNextFrame()
+    {
+        yield return new WaitForEndOfFrame();
+
+        // Kalau item TIDAK berhasil masuk slot manapun di frame ini,
+        // matikan izinnya supaya tidak "nyangkut aktif" selamanya.
+        if (!inSlot)
+            canEnterInventory = false;
     }
 
     public void ResetInventoryPermission()
